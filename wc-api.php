@@ -2,19 +2,19 @@
 
 require 'app/init.php';
 
-$date = ['y'=>2016,'m'=>0,'d'=>30,'h'=>0,'i'=>0,'s'=>0]; // User input
+$date = ['y'=>2016,'m'=>1,'d'=>0,'h'=>0,'i'=>0,'s'=>0]; // User input
 
-$limit = 1; // User input / from settings array (-1 for all)
+$limit = -1; // User input / from settings array (-1 for all)
 
 $sites = get_sites();
 $orders = get_orders();
 
 
-$orders = loop_orders($sites, $orders, $date, $limit, true);
+//$orders = add_orders($sites, $orders, $date, $limit);
 
-add_invoices($orders); // IT WILL INSERT EVERYTHING, BE CAREFULL WITH DUPLICATES
+//pred($orders);
 
-pred(get_invoices());
+//add_invoices($orders); // IT WILL INSERT EVERYTHING, BE CAREFULL WITH DUPLICATES
 
 #Login, Logout, Register function
 	#Make "Administration panel admin-panel"
@@ -32,13 +32,15 @@ pred(get_invoices());
 			#Either .csv or as the pdf - (invoice template from jellybeans.dk )
 
 
-function loop_orders($sites, $orders, $date, $limit, $return_only_new_orders = false){
+function add_orders($sites, $orders, $date, $limit, $return_only_new_orders = true){
 	foreach ($sites as $site => $val) {
 		$loaded_orders = json_decode(get_new_orders($val['url'], $val['consumer_key'], $val['consumer_secret'], $date, $limit), true)['orders'];
 
 		if (!isset($orders[$site])) {
 			$orders[$site] = [];
 		}
+
+		$loaded_orders = array_assoc_reverse($loaded_orders);
 
 		foreach ($loaded_orders as $new_order => $new_order_val) {
 			//$orders[$site]['order_'.$new_order_val['id']] = $new_order_val; // Merge instead
@@ -50,9 +52,13 @@ function loop_orders($sites, $orders, $date, $limit, $return_only_new_orders = f
 			if (array_key_exists('order_'.$new_order_val['id'], $orders[$site])) {
 				unset($loaded_orders['order_'.$new_order_val['id']]);
 			}
-		}
 
-		$loaded_orders = array_assoc_reverse($loaded_orders);
+			$loaded_orders['order_'.$new_order_val['id']]['owner_site'] = $site;
+
+		}
+		pred($loaded_orders);
+
+		//update_orders($loaded_orders);
 
 		$orders_for_site = $orders[$site];
 
@@ -63,7 +69,6 @@ function loop_orders($sites, $orders, $date, $limit, $return_only_new_orders = f
 
 	krsort($orders);
 
-	update_orders($orders);
 
 	if ($return_only_new_orders) {
 		return $loaded_orders;
@@ -73,7 +78,7 @@ function loop_orders($sites, $orders, $date, $limit, $return_only_new_orders = f
 }
 
 function get_new_orders($site, $ck, $cs, $min_date, $limit){
-	require_once( 'lib/woocommerce-api.php' );
+	require_once 'lib/woocommerce-api.php';
 	$options = array(
 		'debug'           => true,
 		'return_as_array' => false,
@@ -81,6 +86,8 @@ function get_new_orders($site, $ck, $cs, $min_date, $limit){
 		'timeout'         => 30,
 		'ssl_verify'      => false,
 	);
+
+	$fields = 'id,order_number,created_at,updated_at,completed_at,status,currency,total,subtotal,total_line_items_quantity,total_tax,total_shipping,cart_tax,shipping_tax,total_discount,shipping_methods,payment_details,billing_address,shipping_address,note,customer_ip,customer_id,view_order_url,line_items,shipping_lines,tax_lines,fee_lines,coupon_lines';
 
 	if ($min_date['m'] > 10) {
 		$min_date['m'] = '0'.$min_date['m'];
@@ -104,7 +111,7 @@ function get_new_orders($site, $ck, $cs, $min_date, $limit){
 
 		// orders
 		$res = $client->orders->get(null, array(
-			'fields' => 'id,status,date,order_number,total,subtotal,total_tax,total_shipping,cart_tax,shipping_tax,total_discount,fee_lines.total,fee_lines.total_tax,created_at,completed_at',
+			'fields' => $fields,
 			'status' => 'completed,refunded',
 			'filter[created_at_min]' => $min_date['y'].'-'.$min_date['m'].'-'.$min_date['d'].'T'.$min_date['h'].':'.$min_date['i'].':'.$min_date['s'].'Z',
 			'filter[limit]' => $limit
@@ -268,11 +275,11 @@ function update_next_invoice_number($next_invoice){
 
 function get_orders(){
 	global $db;
-	$sth = $db->prepare("SELECT * FROM orders LIMIT 1");
+	$sth = $db->prepare("SELECT `order_id`, `created_at`, `updated_at`, `completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines` FROM orders");
 	$sth->execute();
-	$result = $sth->fetch(PDO::FETCH_ASSOC);
+	$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-	return json_decode($result['orders'], 1);
+	return $result;
 }
 
 function get_sites(){
@@ -309,16 +316,57 @@ function get_settings(){
 
 function update_orders(array $orders){
 	global $db;
-	$orders = json_encode($orders);
 
-	$sth = $db->prepare("UPDATE `orders` SET `orders` = :orders WHERE `id` = 1");
-	$sth->bindParam(':orders', $orders);
+	$sql = "INSERT INTO orders (`owner_site`, `order_id`, `created_at`, `updated_at`, `completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`) 
+   VALUES (:owner_site, :order_id, :created_at, :updated_at, :completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines) 
+   ON DUPLICATE KEY UPDATE `order_id` = `order_id`";
 
-	if ( $sth->execute() ){
-		return true;
+	foreach ($orders as $order => $value) {
+		$sth = $db->prepare($sql);
+
+		$shipping_methods = json_encode($value['shipping_methods']);
+		$payment_details = json_encode($value['payment_details']);
+		$billing_address = json_encode($value['billing_address']);
+		$shipping_address = json_encode($value['shipping_address']);
+		$line_items = json_encode($value['line_items']);
+		$shipping_lines = json_encode($value['shipping_lines']);
+		$tax_lines = json_encode($value['tax_lines']);
+		$fee_lines = json_encode($value['fee_lines']);
+		$coupon_lines = json_encode($value['coupon_lines']);
+
+		$sth->bindParam(':owner_site', $value['owner_site']);
+		$sth->bindParam(':order_id', $value['id']);
+		$sth->bindParam(':created_at', $value['created_at']);
+		$sth->bindParam(':updated_at', $value['updated_at']);
+		$sth->bindParam(':completed_at', $value['completed_at']);
+		$sth->bindParam(':status', $value['status']);
+		$sth->bindParam(':currency', $value['currency']);
+		$sth->bindParam(':total', $value['total']);
+		$sth->bindParam(':subtotal', $value['subtotal']);
+		$sth->bindParam(':total_tax', $value['total_tax']);
+		$sth->bindParam(':total_shipping', $value['total_shipping']);
+		$sth->bindParam(':shipping_tax', $value['shipping_tax']);
+		$sth->bindParam(':cart_tax', $value['cart_tax']);
+		$sth->bindParam(':total_discount', $value['total_discount']);
+		$sth->bindParam(':shipping_methods', $shipping_methods);
+		$sth->bindParam(':payment_details', $payment_details);
+		$sth->bindParam(':billing_address', $billing_address);
+		$sth->bindParam(':shipping_address', $shipping_address);
+		$sth->bindParam(':total_line_items_quantity', $value['total_line_items_quantity']);
+		$sth->bindParam(':note', $value['note']);
+		$sth->bindParam(':customer_ip', $value['customer_ip']);
+		$sth->bindParam(':customer_id', $value['customer_id']);
+		$sth->bindParam(':view_order_url', $value['view_order_url']);
+		$sth->bindParam(':line_items', $line_items);
+		$sth->bindParam(':shipping_lines', $shipping_lines);
+		$sth->bindParam(':tax_lines', $tax_lines);
+		$sth->bindParam(':fee_lines', $fee_lines);
+		$sth->bindParam(':coupon_lines', $coupon_lines);
+
+		$sth->execute();
 	}
 
-	return false;
+	return true;
 }
 
 function array_assoc_reverse(array $arr){
@@ -331,3 +379,18 @@ function pred($arr){
 	echo '</pre>';
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Hej</title>
+</head>
+<body>
+	<?php pred(json_decode(json_encode($orders))); ?>
+</body>
+</html>
+
+
+
+
+
