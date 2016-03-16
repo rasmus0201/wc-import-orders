@@ -1,6 +1,6 @@
 <?php
 
-require 'app/init.php';
+require 'init.php';
 
 $min_date = ['y'=>2016,'m'=>1,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
 $max_date = 0;#['y'=>2016,'m'=>2,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
@@ -76,7 +76,7 @@ function add_orders($sites, $orders, $min_date, $max_date, $limit, $return_only_
 }
 
 function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
-	require_once 'lib/woocommerce-api.php';
+	require_once '../lib/woocommerce-api.php';
 	$options = array(
 		'debug'           => true,
 		'return_as_array' => false,
@@ -468,11 +468,5 @@ function get_settings(){
 
 function array_assoc_reverse(array $arr){
 	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
-}
-
-function pred($arr){
-	echo '<pre>';
-	var_dump($arr);
-	echo '</pre>';
 }
 ?>

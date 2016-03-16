@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.3.11
+-- version 4.4.10
 -- http://www.phpmyadmin.net
 --
--- Vært: 127.0.0.1
--- Genereringstid: 15. 03 2016 kl. 21:36:37
--- Serverversion: 5.6.24
--- PHP-version: 5.6.8
+-- Vært: localhost:8889
+-- Genereringstid: 16. 03 2016 kl. 14:14:12
+-- Serverversion: 5.5.42
+-- PHP-version: 5.6.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -14,7 +14,7 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
+/*!40101 SET NAMES utf8mb4 */;
 
 --
 -- Database: `wc_invoices`
@@ -26,7 +26,7 @@ SET time_zone = "+00:00";
 -- Struktur-dump for tabellen `invoices`
 --
 
-CREATE TABLE IF NOT EXISTS `invoices` (
+CREATE TABLE `invoices` (
   `id` int(11) NOT NULL,
   `invoice_id` int(11) NOT NULL,
   `owner_site` varchar(255) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `invoices` (
 -- Struktur-dump for tabellen `orders`
 --
 
-CREATE TABLE IF NOT EXISTS `orders` (
+CREATE TABLE `orders` (
   `id` int(11) NOT NULL,
   `owner_site` varchar(255) NOT NULL,
   `order_id` int(11) NOT NULL,
@@ -78,11 +78,11 @@ CREATE TABLE IF NOT EXISTS `orders` (
 -- Struktur-dump for tabellen `settings`
 --
 
-CREATE TABLE IF NOT EXISTS `settings` (
+CREATE TABLE `settings` (
   `id` int(11) NOT NULL,
   `setting_name` text NOT NULL,
   `setting_value` mediumtext NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
 --
 -- Data dump for tabellen `settings`
@@ -90,7 +90,9 @@ CREATE TABLE IF NOT EXISTS `settings` (
 
 INSERT INTO `settings` (`id`, `setting_name`, `setting_value`) VALUES
 (1, 'next_invoice', '1'),
-(2, 'last_pull_date', '');
+(2, 'last_pull_date', ''),
+(3, 'base_url', 'http://localhost:8888/wc-unite-invoices/'),
+(4, 'base_path', '/path/to/base');
 
 -- --------------------------------------------------------
 
@@ -98,7 +100,7 @@ INSERT INTO `settings` (`id`, `setting_name`, `setting_value`) VALUES
 -- Struktur-dump for tabellen `sites`
 --
 
-CREATE TABLE IF NOT EXISTS `sites` (
+CREATE TABLE `sites` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `url` varchar(255) NOT NULL,
@@ -114,6 +116,21 @@ INSERT INTO `sites` (`id`, `name`, `url`, `consumer_key`, `consumer_secret`) VAL
 (1, 'jellybeans.dk', 'http://jellybeans.dk', 'ck_44384696901943c68c1981971590c31954b4dd07', 'cs_5a3d6e6cbced38c1299e983b0f35d93f975722b3'),
 (2, 'slikworld.dk', 'http://slikworld.dk', 'ck_217f17f1a60cf68e84ab9d8e16bfda9282d282c3', 'cs_5189295b26e8531a2be8f9b56042d46d74c61a0c');
 
+-- --------------------------------------------------------
+
+--
+-- Struktur-dump for tabellen `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(60) NOT NULL,
+  `name` text NOT NULL,
+  `role` enum('superadmin','admin','accountant','viewer') NOT NULL DEFAULT 'viewer',
+  `reset_password` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 --
 -- Begrænsninger for dumpede tabeller
 --
@@ -122,13 +139,15 @@ INSERT INTO `sites` (`id`, `name`, `url`, `consumer_key`, `consumer_secret`) VAL
 -- Indeks for tabel `invoices`
 --
 ALTER TABLE `invoices`
-  ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `unique_invoice_id` (`invoice_id`,`order_id`,`owner_site`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_invoice_id` (`invoice_id`,`order_id`,`owner_site`);
 
 --
 -- Indeks for tabel `orders`
 --
 ALTER TABLE `orders`
-  ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `unique_order_id` (`order_id`,`owner_site`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_order_id` (`order_id`,`owner_site`);
 
 --
 -- Indeks for tabel `settings`
@@ -140,6 +159,12 @@ ALTER TABLE `settings`
 -- Indeks for tabel `sites`
 --
 ALTER TABLE `sites`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indeks for tabel `users`
+--
+ALTER TABLE `users`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -160,12 +185,17 @@ ALTER TABLE `orders`
 -- Tilføj AUTO_INCREMENT i tabel `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=5;
 --
 -- Tilføj AUTO_INCREMENT i tabel `sites`
 --
 ALTER TABLE `sites`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
+--
+-- Tilføj AUTO_INCREMENT i tabel `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
