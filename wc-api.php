@@ -57,9 +57,7 @@ function add_orders($sites, $orders, $min_date, $max_date, $limit, $return_only_
 			$new_orders['order_'.$new_order_val['id']]['owner_site'] = $site;
 		}
 
-		pred($new_orders);
-
-		//update_orders($new_orders);
+		update_orders($new_orders);
 
 		$orders_for_site = $orders[$site];
 
@@ -339,8 +337,13 @@ function update_orders(array $orders){
 		$fee_lines = json_encode($value['fee_lines']);
 		$coupon_lines = json_encode($value['coupon_lines']);
 
+		$fee = 0;
+
+		if (!empty($value['fee_lines'])) {
+			$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
+		}
+
 		$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
-		$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
 		$cart_discount = (float)$value['total_discount'];
 		$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
 		$id = $value['id'];
@@ -361,7 +364,7 @@ function update_orders(array $orders){
 		if (empty($shipping_total)) {
 			$shipping_csv = '';
 		}
-		if (empty($fee)) {
+		if (empty($fee) || $fee == 0) {
 			$fee_csv = '';
 		}
 		if (empty($total)) {
@@ -473,12 +476,3 @@ function pred($arr){
 	echo '</pre>';
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Hej</title>
-</head>
-<body>
-	<?php #pred(json_decode('{"separated":{"subtotal":"10-03-2016;-{invoice_id};0;\"1010\";\"\";\"jellybeans.dk (ID: 3377)\";193,00;\"DKK\";100,00;\"Salg\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n","shipping":"10-03-2016;-{invoice_id};0;\"1040\";\"\";\"jellybeans.dk (ID: 3377)\";35,00;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n","fee":"10-03-2016;-{invoice_id};0;\"1610\";\"\";\"jellybeans.dk (ID: 3377)\";3,31;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n","total":"10-03-2016;-{invoice_id};0;\"16200\";\"\";\"jellybeans.dk (ID: 3377)\";-231,31;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n"},"joined":"10-03-2016;-{invoice_id};0;\"1010\";\"\";\"jellybeans.dk (ID: 3377)\";193,00;\"DKK\";100,00;\"Salg\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n10-03-2016;-{invoice_id};0;\"1040\";\"\";\"jellybeans.dk (ID: 3377)\";35,00;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n10-03-2016;-{invoice_id};0;\"1610\";\"\";\"jellybeans.dk (ID: 3377)\";3,31;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n10-03-2016;-{invoice_id};0;\"16200\";\"\";\"jellybeans.dk (ID: 3377)\";-231,31;\"DKK\";100,00;\"\";\"\";0;10-03-2016;0,00;;\"\";\"\";0,00;0;\"\";0;\"\";\"\";\"\";\"\";\"\";0;0,00;\"\";\"\";\"\";\"\";\"\";0\n"}', 1)); ?>
-</html>

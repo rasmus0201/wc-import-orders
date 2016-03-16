@@ -6,7 +6,7 @@ mb_internal_encoding("UTF-8");
 session_start();
 
 try {
-	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', '');
+	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', 'root');
 	$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $db->exec("SET NAMES utf8mb4");
 } catch (PDOException $e) {
