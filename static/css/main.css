@@ -1,3 +1,104 @@
+body.loggedin {
+    padding-top: 50px;
+}
+
+body.loggedin .sub-header {
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+}
+
+body.loggedin .navbar-fixed-top {
+	border: 0;
+}
+
+/*
+ * Sidebar
+ */
+
+/* Hide for mobile, show later */
+body.loggedin .sidebar {
+	display: none;
+}
+
+@media (min-width: 768px) {
+	body.loggedin .sidebar {
+		position: fixed;
+		top: 51px;
+		bottom: 0;
+		left: 0;
+		z-index: 1000;
+		display: block;
+		padding: 20px;
+		overflow-x: hidden;
+		overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+		background-color: #f5f5f5;
+		border-right: 1px solid #eee;
+	}
+}
+
+/* Sidebar navigation */
+body.loggedin .nav-sidebar {
+	margin-right: -21px; /* 20px padding + 1px border */
+	margin-bottom: 20px;
+	margin-left: -20px;
+}
+body.loggedin .nav-sidebar > li > a {
+	padding-right: 20px;
+	padding-left: 20px;
+}
+body.loggedin .nav-sidebar > .active > a,
+body.loggedin .nav-sidebar > .active > a:hover,
+body.loggedin .nav-sidebar > .active > a:focus {
+	color: #fff;
+	background-color: #428bca;
+}
+
+
+body.loggedin .main {
+	padding: 20px;
+}
+@media (min-width: 768px) {
+	body.loggedin .main {
+		padding-right: 40px;
+		padding-left: 40px;
+	}
+}
+body.loggedin .main .page-header {
+	margin-top: 0;
+}
+
+body.loggedin .admin-content{
+	padding-bottom: 60px;
+}
+
+
+/*
+ * Placeholder dashboard ideas
+ */
+body.loggedin .placeholders {
+	margin-bottom: 30px;
+	text-align: center;
+}
+body.loggedin .placeholders h4 {
+	margin-bottom: 0;
+}
+body.loggedin .placeholder {
+	margin-bottom: 20px;
+}
+body.loggedin .placeholder img {
+	display: inline-block;
+	border-radius: 50%;
+}
+
+body.loggedin .footer{
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+	padding: 25px 0;
+	height: 60px;
+	background-color: #f5f5f5;
+}
+
 .footer{
 	position: absolute;
 	bottom: 0;
@@ -6,6 +107,14 @@
 	height: 60px;
 	background-color: #f5f5f5;
 }
+
+
+
+
+
+
+
+/* Tablesorter */
 
 table.tablesorter {
 	font-family:arial;

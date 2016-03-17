@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('BASE_URL')) {
+	header('HTTP/1.0 404 not found');
+	exit;
+}
+
 require_once 'head.php';
 
 ?>
@@ -23,7 +28,7 @@ require_once 'head.php';
 				<div class="form-group">
 					<input required type="password" name="password" placeholder="Password" class="form-control">
 				</div>
-				<button type="submit" class="btn btn-success">Log ind</button>
+				<button type="submit" name="login-submit" class="btn btn-success">Log ind</button>
 			</form>
 		</div>
 	</div>

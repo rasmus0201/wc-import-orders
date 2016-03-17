@@ -3,7 +3,36 @@
 require_once 'db.php';
 
 require_once 'wc-api.php';
+require_once 'functions.php';
 require_once 'user.php';
+
+if (!defined('BASE_URL')) {
+	header('HTTP/1.0 404 not found');
+	echo '<h1>404 - Page not found.</h1>';
+	exit;
+}
+
+$current_url = str_replace(BASE_PATH,'',$_SERVER["SCRIPT_FILENAME"]);
+$global['current_url'] = $current_url;
+
+
+$titles = [
+	'index.php' => 'ULVEMOSENSHANDELSSELSKAB / Administrationsside',
+	'admin/index.php' => 'Dashboard',
+	'admin/profile.php' => 'Profil',
+	'admin/settings.php' => 'Indstillinger',
+	'admin/orders.php' => 'Ordre',
+	'admin/reports.php' => 'Raporter',
+	'admin/invoices.php' => 'Fakturaer',
+	'admin/sites.php' => 'Sider',
+	'admin/logout.php' => 'Log ud',
+];
+
+if (array_key_exists($global['current_url'], $titles)) {
+	$global['site_title'] = $titles[$global['current_url']];
+} else {
+	$global['site_title'] = 'ULVEMOSENSHANDELSSELSKAB / Administrationsside';
+}
 
 
 $global['project_name'] = 'ULVEMOSENSHANDELSSELSKAB / Administrationsside';

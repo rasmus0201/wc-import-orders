@@ -1,5 +1,11 @@
 <?php
 
+if (!defined('BASE_URL')) {
+	header('HTTP/1.0 404 not found');
+	echo '<h1>404 - Page not found.</h1>';
+	exit;
+}
+
 function add_orders($sites, $orders, $min_date, $max_date, $limit, $return_only_new_orders = true){
 	foreach ($sites as $site => $val) {
 		$new_orders = json_decode(get_new_orders($val['url'], $val['consumer_key'], $val['consumer_secret'], $min_date, $max_date, $limit), true)['orders'];

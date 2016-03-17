@@ -7,7 +7,7 @@ mb_internal_encoding("UTF-8");
 session_start();
 
 try {
-	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', '');
+	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', 'root');
 	$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 	$db->exec("SET NAMES utf8mb4");
 } catch (PDOException $e) {
@@ -24,10 +24,16 @@ foreach ($db_settings as $setting => $value) {
 	unset($db_settings[$value['id']-1]);
 }
 
+$message = '';;
+
 //define('BASE_PATH', $db_settings['base_path']);
 //define('BASE_URL', $db_settings['base_url']);
-define('BASE_PATH', getcwd().'/');
-define('BASE_URL', fullpageurl());
+
+//define('BASE_PATH', getcwd().'/');
+//define('BASE_URL', fullpageurl());
+define('BASE_PATH', '/Applications/MAMP/htdocs/wc-unite-invoices/');
+
+define('BASE_URL', 'http://localhost:8888/wc-unite-invoices/');
 
 define('TEMPLATES_URL', BASE_URL.'templates/');
 define('STATIC_URL', BASE_URL.'static/');
@@ -41,14 +47,3 @@ function fullpageurl() {
     }
     return $pageURL;
 }
-
-// $STH = $DB->prepare("SELECT * FROM users WHERE user = :s");
-// $STH->execute(array(25));
-// $User = $STH->fetch();
-
-// $sth = $dbh->prepare('SELECT name, colour, calories FROM fruit WHERE calories < :calories AND colour = :colour');
-// $sth->bindParam(':calories', $calories);
-// $sth->bindParam(':colour', $colour);
-// $sth->execute();
-
-//$results = $sth->fetchAll(PDO::FETCH_ASSOC);

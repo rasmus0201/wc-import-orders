@@ -1,3 +1,10 @@
+<?php 
+if (!defined('BASE_URL')) {
+	header('HTTP/1.0 404 not found');
+	exit;
+}
+?>
+
 	</div>
 	<footer class="footer">
 		<div class="container">

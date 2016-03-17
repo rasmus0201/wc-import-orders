@@ -1,5 +1,5 @@
 $(document).ready(function() { 
-	$("#myTable").tablesorter().tablesorterPager({container: $("#pager")});; 
+	//$("#myTable").tablesorter().tablesorterPager({container: $("#pager")});; 
 } ); 
 
 //https://datatables.net/examples/styling/bootstrap.html

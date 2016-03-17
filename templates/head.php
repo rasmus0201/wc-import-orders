@@ -1,3 +1,17 @@
+<?php
+
+if (!defined('BASE_URL')) {
+	header('HTTP/1.0 404 not found');
+	exit;
+}
+
+if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
+	$body_class = 'loggedin';
+}else {
+	$body_class = 'loggedout';
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -5,9 +19,9 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-		<meta name="apple-mobile-web-app-title" content="Rasmusbs.com - Invoices">
-		<meta name="application-name" content="Rasmusbs.com - Invoices">
-		<meta name="description" content="Rasmusbs.com - Invoices">
+		<meta name="apple-mobile-web-app-title" content="<?php echo $global['project_name']; ?>">
+		<meta name="application-name" content="<?php echo $global['project_name']; ?>">
+		<meta name="description" content="<?php echo $global['project_name']; ?>">
 		<meta name="robots" content="noodp">
 		<link rel="canonical" href="<?php echo BASE_URL; ?>">
 
@@ -35,9 +49,9 @@
 		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>css/main.css">
 
 
-		<title>Title</title>
+		<title><?php echo $global['site_title']; ?></title>
 	</head>
-	<body>
+	<body class="<?php echo $body_class; ?>">
 
 
 
