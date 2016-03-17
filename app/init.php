@@ -1,50 +1,36 @@
 <?php
-ini_set('display_errors', 'On');
-error_reporting(E_ALL);
-mb_internal_encoding("UTF-8");
 
-session_start();
+require_once 'db.php';
 
-try {
-	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', 'root');
-	$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  $db->exec("SET NAMES utf8mb4");
-} catch (PDOException $e) {
-	$error_message = $e->getMessage();
-	die("An error occured. ERR: ".$error_message);
-}
+require_once 'wc-api.php';
+require_once 'user.php';
 
-$db_settings = $db->prepare("SELECT * FROM `settings`");
-$db_settings->execute();
-$db_settings = $db_settings->fetchAll(PDO::FETCH_ASSOC);
-
-foreach ($db_settings as $setting => $value) {
-	$db_settings[$value['setting_name']] = $value['setting_value'];
-	unset($db_settings[$value['id']-1]);
-}
-
-
-define('BASE_PATH', $db_settings['base_path']);
-define('BASE_URL', $db_settings['base_url']);
-
-define('TEMPLATES_URL', BASE_URL.'templates/');
-define('STATIC_URL', BASE_URL.'static/');
 
 $global['project_name'] = 'ULVEMOSENSHANDELSSELSKAB / Administrationsside';
 
-// $STH = $DB->prepare("SELECT * FROM users WHERE user = :s");
-// $STH->execute(array(25));
-// $User = $STH->fetch();
+$min_date = ['y'=>2016,'m'=>1,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
+$max_date = 0;#['y'=>2016,'m'=>2,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
 
-// $sth = $dbh->prepare('SELECT name, colour, calories FROM fruit WHERE calories < :calories AND colour = :colour');
-// $sth->bindParam(':calories', $calories);
-// $sth->bindParam(':colour', $colour);
-// $sth->execute();
+$limit = -1; // User input / from settings array (-1 for all)
 
-//$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+//$sites = get_sites();
+//$orders = get_orders();
 
-function pred($arr){
-	echo '<pre>';
-	var_dump($arr);
-	echo '</pre>';
-}
+//$orders = add_orders($sites, $orders, $min_date, $max_date, $limit);
+
+//add_invoices($orders); // IT WILL INSERT EVERYTHING, BE CAREFULL WITH DUPLICATES
+
+#Login, Logout, Register function
+	#Make "Administration panel admin-panel"
+#User Interface
+	#Choose from date - min. last_pull_date - a day (an hour what ever just be sure to not miss any orders!!)
+	#See pulled orders from each site AND See all invoices - see owner site (all data, if click)
+		#Order by date, id, or total order price
+	#Make some reports (daily, weekly, monthly, yearly, custom)
+		#See vat, subtotal, total, shipping, shipping vat, fees
+		#Also see dates and other info.
+	#Export
+		#Choose invoices
+			#Either by bulk (from invoice_xx to invoice_yy or by date) OR By checkbox
+		#Choose the export form 
+			#Either .csv or as the pdf - (invoice template from jellybeans.dk )

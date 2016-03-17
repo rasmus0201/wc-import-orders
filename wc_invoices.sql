@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.4.10
+-- version 4.3.11
 -- http://www.phpmyadmin.net
 --
--- Vært: localhost:8889
--- Genereringstid: 16. 03 2016 kl. 14:14:12
--- Serverversion: 5.5.42
--- PHP-version: 5.6.10
+-- Vært: 127.0.0.1
+-- Genereringstid: 16. 03 2016 kl. 22:02:52
+-- Serverversion: 5.6.24
+-- PHP-version: 5.6.8
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -14,7 +14,7 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8 */;
 
 --
 -- Database: `wc_invoices`
@@ -26,7 +26,7 @@ SET time_zone = "+00:00";
 -- Struktur-dump for tabellen `invoices`
 --
 
-CREATE TABLE `invoices` (
+CREATE TABLE IF NOT EXISTS `invoices` (
   `id` int(11) NOT NULL,
   `invoice_id` int(11) NOT NULL,
   `owner_site` varchar(255) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `invoices` (
 -- Struktur-dump for tabellen `orders`
 --
 
-CREATE TABLE `orders` (
+CREATE TABLE IF NOT EXISTS `orders` (
   `id` int(11) NOT NULL,
   `owner_site` varchar(255) NOT NULL,
   `order_id` int(11) NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE `orders` (
 -- Struktur-dump for tabellen `settings`
 --
 
-CREATE TABLE `settings` (
+CREATE TABLE IF NOT EXISTS `settings` (
   `id` int(11) NOT NULL,
   `setting_name` text NOT NULL,
   `setting_value` mediumtext NOT NULL
@@ -91,7 +91,7 @@ CREATE TABLE `settings` (
 INSERT INTO `settings` (`id`, `setting_name`, `setting_value`) VALUES
 (1, 'next_invoice', '1'),
 (2, 'last_pull_date', ''),
-(3, 'base_url', 'http://localhost:8888/wc-unite-invoices/'),
+(3, 'base_url', 'http://localhost/small/wc-unite-invoices/'),
 (4, 'base_path', '/path/to/base');
 
 -- --------------------------------------------------------
@@ -100,7 +100,7 @@ INSERT INTO `settings` (`id`, `setting_name`, `setting_value`) VALUES
 -- Struktur-dump for tabellen `sites`
 --
 
-CREATE TABLE `sites` (
+CREATE TABLE IF NOT EXISTS `sites` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `url` varchar(255) NOT NULL,
@@ -122,7 +122,7 @@ INSERT INTO `sites` (`id`, `name`, `url`, `consumer_key`, `consumer_secret`) VAL
 -- Struktur-dump for tabellen `users`
 --
 
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(60) NOT NULL,
@@ -139,15 +139,13 @@ CREATE TABLE `users` (
 -- Indeks for tabel `invoices`
 --
 ALTER TABLE `invoices`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_invoice_id` (`invoice_id`,`order_id`,`owner_site`);
+  ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `unique_invoice_id` (`invoice_id`,`order_id`,`owner_site`);
 
 --
 -- Indeks for tabel `orders`
 --
 ALTER TABLE `orders`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_order_id` (`order_id`,`owner_site`);
+  ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `unique_order_id` (`order_id`,`owner_site`);
 
 --
 -- Indeks for tabel `settings`

@@ -1,6 +1,7 @@
 <?php
 
-require_once 'app/init.php';
+require 'app/db.php';
+require 'app/init.php';
 
 require 'templates/header.php';
 
