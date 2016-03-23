@@ -44,7 +44,6 @@ if (isset($_POST['change_user_password'])) {
 	}
 }
 
-
 require '../templates/admin-header.php';
 
 ?>
@@ -61,13 +60,13 @@ require '../templates/admin-header.php';
 			<div class="form-group <?php echo (isset($user_email_error)) ? 'has-error' : '' ;?>">
 				<label for="email" class="col-sm-2 control-label">E-mail</label>
 				<div class="col-sm-10">
-					<input required type="email" class="form-control" name="email" id="email" placeholder="E-mail" value="<?php echo ($message === false) ? '' : $_SESSION['user_email']; ?>">
+					<input required type="email" class="form-control" name="email" id="email" placeholder="E-mail" value="<?php echo (isset($_POST['email'])) ? $_POST['email'] : $_SESSION['user_email']; ?>">
 				</div>
 			</div>
 			<div class="form-group <?php echo (isset($user_name_error)) ? 'has-error' : '' ;?>">
 				<label for="name" class="col-sm-2 control-label">Navn</label>
 				<div class="col-sm-10">
-					<input required type="text" class="form-control" name="name" id="name" placeholder="Fulde navn" value="<?php echo ($message === false) ? '' : $_SESSION['user_name']; ?>">
+					<input required type="text" class="form-control" name="name" id="name" placeholder="Fulde navn" value="<?php echo (isset($_POST['name'])) ? $_POST['name'] : $_SESSION['user_name']; ?>">
 				</div>
 			</div>
 			<div class="form-group">

@@ -24,11 +24,28 @@ function login($email, $password){
 	$isGood = $bcrypt->verify($password, $user_password);
 
 	if ($isGood) {
+		$sth_1 = $db->prepare("SELECT COUNT(*) FROM orders");
+		$sth_2 = $db->prepare("SELECT COUNT(*) FROM invoices");
+		$sth_3 = $db->prepare("SELECT COUNT(*) FROM sites");
+
+		$result_1 = $sth_1->execute();
+		$orders_count = $sth_1->fetchColumn();
+
+		$result_2 = $sth_2->execute();
+		$invoices_count = $sth_2->fetchColumn();
+		
+		$result_3 = $sth_3->execute();
+		$sites_count = $sth_3->fetchColumn();
+
 		$_SESSION['loggedin'] = true;
 		$_SESSION['user_id'] = $user_id;
 		$_SESSION['user_email'] = $user_email;
 		$_SESSION['user_name'] = $user_name;
 		$_SESSION['user_role'] = $user_role;
+
+		$_SESSION['orders_count'] = $orders_count;
+		$_SESSION['invoices_count'] = $invoices_count;
+		$_SESSION['sites_count'] = $sites_count;
 		return true;
 	}
 
@@ -47,6 +64,10 @@ function logout(){
 	unset($_SESSION['user_email']);
 	unset($_SESSION['user_name']);
 	unset($_SESSION['user_role']);
+
+	unset($_SESSION['orders_count']);
+	unset($_SESSION['invoices_count']);
+	unset($_SESSION['sites_count']);
 	session_destroy();
 
 	header('Location: '.BASE_URL);

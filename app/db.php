@@ -15,7 +15,7 @@ try {
 	die("An error occured. ERR: ".$error_message);
 }
 
-$db_settings = $db->prepare("SELECT * FROM `settings`");
+$db_settings = $db->prepare("SELECT * FROM settings");
 $db_settings->execute();
 $db_settings = $db_settings->fetchAll(PDO::FETCH_ASSOC);
 
@@ -24,8 +24,9 @@ foreach ($db_settings as $setting => $value) {
 	unset($db_settings[$value['id']-1]);
 }
 
-$message = '';;
+$message = '';
 
+//date('Y-m-d H:i:s', time());
 //define('BASE_PATH', $db_settings['base_path']);
 //define('BASE_URL', $db_settings['base_url']);
 

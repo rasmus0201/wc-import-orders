@@ -14,28 +14,25 @@ if (!defined('BASE_URL')) {
 
 $current_url = str_replace(BASE_PATH,'',$_SERVER["SCRIPT_FILENAME"]);
 $global['current_url'] = $current_url;
-
+$global['project_name'] = 'ULVEMOSENS HANDELSSELSKAB / Administrationsside';
 
 $titles = [
-	'index.php' => 'ULVEMOSENSHANDELSSELSKAB / Administrationsside',
+	'index.php' => $global['project_name'],
 	'admin/index.php' => 'Dashboard',
 	'admin/profile.php' => 'Profil',
 	'admin/settings.php' => 'Indstillinger',
 	'admin/orders.php' => 'Ordre',
 	'admin/reports.php' => 'Raporter',
 	'admin/invoices.php' => 'Fakturaer',
-	'admin/sites.php' => 'Sider',
+	'admin/sites.php' => 'WC shops',
 	'admin/logout.php' => 'Log ud',
 ];
 
 if (array_key_exists($global['current_url'], $titles)) {
 	$global['site_title'] = $titles[$global['current_url']];
 } else {
-	$global['site_title'] = 'ULVEMOSENSHANDELSSELSKAB / Administrationsside';
+	$global['site_title'] = $global['project_name'];
 }
-
-
-$global['project_name'] = 'ULVEMOSENSHANDELSSELSKAB / Administrationsside';
 
 $min_date = ['y'=>2016,'m'=>1,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
 $max_date = 0;#['y'=>2016,'m'=>2,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
@@ -63,3 +60,11 @@ $limit = -1; // User input / from settings array (-1 for all)
 			#Either by bulk (from invoice_xx to invoice_yy or by date) OR By checkbox
 		#Choose the export form 
 			#Either .csv or as the pdf - (invoice template from jellybeans.dk )
+
+
+#Change site details post
+#Add new site post
+
+
+
+
