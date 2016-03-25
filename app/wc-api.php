@@ -6,50 +6,8 @@ if (!defined('BASE_URL')) {
 	exit;
 }
 
-function add_orders($sites, $orders, $min_date, $max_date, $limit, $return_only_new_orders = true){
-	foreach ($sites as $site => $val) {
-		$new_orders = json_decode(get_new_orders($val['url'], $val['consumer_key'], $val['consumer_secret'], $min_date, $max_date, $limit), true)['orders'];
-
-		if (!isset($orders[$site])) {
-			$orders[$site] = [];
-		}
-
-		$new_orders = array_assoc_reverse($new_orders);
-
-		foreach ($new_orders as $new_order => $new_order_val) {
-			//$orders[$site]['order_'.$new_order_val['id']] = $new_order_val; // Merge instead
-			$new_orders['order_'.$new_order_val['id']] = $new_order_val;
-			$new_orders[$new_order] = [];
-			unset($new_orders[$new_order]);
-
-
-			if (array_key_exists('order_'.$new_order_val['id'], $orders[$site])) {
-				unset($new_orders['order_'.$new_order_val['id']]);
-			}
-
-			$new_orders['order_'.$new_order_val['id']]['owner_site'] = $site;
-		}
-
-		update_orders($new_orders);
-
-		$orders_for_site = $orders[$site];
-
-		unset($orders[$site]);
-
-		$orders[$site] = array_merge($orders_for_site, $new_orders);
-	}
-
-	krsort($orders);
-
-	if ($return_only_new_orders) {
-		return $new_orders;
-	}
-
-	return $orders;
-}
-
 function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
-	require_once BASE_PATH.'lib/woocommerce-api.php';
+	require_once BASE_PATH.'/lib/woocommerce-api.php';
 	$options = array(
 		'debug'           => true,
 		'return_as_array' => false,
@@ -132,105 +90,13 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 
 	} catch ( WC_API_Client_Exception $e ) {
 		//echo json_encode($e->getMessage() . PHP_EOL);
-		echo json_encode($e->getCode() . PHP_EOL);
 		if ( $e instanceof WC_API_Client_HTTP_Exception ) {
 			//echo json_encode($e->get_request());
-			echo json_encode($e->get_response());
-		}
-	}
-}
-
-function add_invoices(array $orders){
-	global $db;
-
-	$sth = $db->prepare("SELECT * FROM `settings` WHERE `setting_name` = :name");
-	$key = 'next_invoice';
-	$sth->bindParam(':name', $key);
-	$sth->execute();
-	$res = $sth->fetch(PDO::FETCH_ASSOC);
-	$next_invoice = $res['setting_value'];
-
-	$invoices = get_invoices();
-
-	if (!is_null($invoices) && !empty($invoices)) {
-		//At least 1 invoice has been made
-		foreach ($orders as $site => $order) {
-			//Add site name + csv to the array.
-			$iteration = 0;
-			foreach ($order as $key => $value) {
-				$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
-				$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
-				$cart_discount = (float)$value['total_discount'];
-				$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
-				$id = $value['id'];
-				$total_no_format = (float)$value['total']-$cart_discount;
-				$subtotal = number_format(((float)$value['total'] - ($fee+$shipping_total+$cart_discount)), 2, ',', '');
-				$total = number_format($total_no_format, 2, ',', '');
-				$fee = number_format($fee, 2, ',', '');
-				$shipping_total = number_format($shipping_total, 2, ',', '');
-
-				$subtotal_csv = $date.';-'.$next_invoice.';0;"1010";"";"'.$site.' (ID: '.$id.')";'.$subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$shipping_csv = $date.';-'.$next_invoice.';0;"1040";"";"'.$site.' (ID: '.$id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$fee_csv = $date.';-'.$next_invoice.';0;"1610";"";"'.$site.' (ID: '.$id.')";'.$fee.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$total_csv = $date.';-'.$next_invoice.';0;"16200";"";"'.$site.' (ID: '.$id.')";-'.$total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-
-				$invoices['invoice_'.$next_invoice] = $value;				
-				$invoices['invoice_'.$next_invoice]['owner_site'] = $site;
-				$invoices['invoice_'.$next_invoice]['csv'] = [	
-					'separated' => [
-						'subtotal'	=> $subtotal_csv,
-						'shipping'	=> $shipping_total,
-						'fee'		=> $fee_csv,
-						'total'		=> $total_csv,
-					],
-					'joined' => $subtotal_csv.$shipping_csv.$fee_csv.$total_csv
-				];
-				$next_invoice = $next_invoice + 1;
-				++$iteration;
-			}
+			//echo json_encode($e->get_response());
 		}
 
-		update_invoices($invoices);
-		update_next_invoice_number($next_invoice);
-	} else {
-		$invoices = [];
-		// No invoices yet
-		foreach ($orders as $site => $order) {
-			//Add site name + csv to the array.
-			foreach ($order as $key => $value) {
-				$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
-				$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
-				$cart_discount = (float)$value['total_discount'];
-				$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
-				$id = $value['id'];
-				$total_no_format = (float)$value['total']-$cart_discount;
-				$subtotal = number_format(((float)$value['total'] - ($fee+$shipping_total+$cart_discount)), 2, ',', '');
-				$total = number_format($total_no_format, 2, ',', '');
-				$fee = number_format($fee, 2, ',', '');
-				$shipping_total = number_format($shipping_total, 2, ',', '');
-
-				$subtotal_csv = $date.';-'.$next_invoice.';0;"1010";"";"'.$site.' (ID: '.$id.')";'.$subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$shipping_csv = $date.';-'.$next_invoice.';0;"1040";"";"'.$site.' (ID: '.$id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$fee_csv = $date.';-'.$next_invoice.';0;"1610";"";"'.$site.' (ID: '.$id.')";'.$fee.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-				$total_csv = $date.';-'.$next_invoice.';0;"16200";"";"'.$site.' (ID: '.$id.')";-'.$total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-
-				$invoices['invoice_'.$next_invoice] = $value;				
-				$invoices['invoice_'.$next_invoice]['owner_site'] = $site;
-				$invoices['invoice_'.$next_invoice]['csv'] = [	
-					'separated' => [
-						'subtotal'	=> $subtotal_csv,
-						'shipping'	=> $shipping_total,
-						'fee'		=> $fee_csv,
-						'total'		=> $total_csv,
-					],
-					'joined' => $subtotal_csv.$shipping_csv.$fee_csv.$total_csv
-				];
-				$next_invoice = $next_invoice + 1;
-			}
-		}
-
-		update_invoices($invoices);
-		update_next_invoice_number($next_invoice);
+		//return $e->getCode();
+		return false;
 	}
 }
 
@@ -260,45 +126,28 @@ function get_orders(){
 		$value['tax_lines'] = json_decode($value['tax_lines'], 1);
 		$value['fee_lines'] = json_decode($value['fee_lines'], 1);
 		$value['coupon_lines'] = json_decode($value['coupon_lines'], 1);
+
+		$results[$value['order_id'].'_'.$value['owner_site_id']] = $value;
+		$results[$order] = [];
+		unset($results[$order]);
 	}
 
 	return $results;
 }
 
-function update_invoices(array $invoices){
+function add_orders(array $orders){
 	if (empty($orders)) {
 		return false;
 	}
 
 	global $db;
 
-	$sql = "INSERT INTO orders (`invoice_id`, `owner_site`, `order_id`, `created_at`) VALUES (:invoice_id, :owner_site, :order_id, NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`";
+	$sql = "INSERT INTO orders (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `order_created_at`, `order_updated_at`, `order_completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`, `updated_at`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name,  :order_id, :order_created_at, :order_updated_at, :order_completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv, NOW(), NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`";
 
 	foreach ($orders as $order => $value) {
 		$sth = $db->prepare($sql);
 
-		$sth->bindParam(':invoice_id', $value['invoice_id']);
-		$sth->bindParam(':owner_site', $value['owner_site']);
-		$sth->bindParam(':order_id', $value['id']);
-		$sth->bindParam(':created_at', $value['created_at']);
-
-		$sth->execute();
-	}
-
-	return true;
-}
-
-function update_orders(array $orders){
-	if (empty($orders)) {
-		return false;
-	}
-
-	global $db;
-
-	$sql = "INSERT INTO orders (`owner_site`, `order_id`, `created_at`, `updated_at`, `completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`) VALUES (:owner_site, :order_id, :created_at, :updated_at, :completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv) ON DUPLICATE KEY UPDATE `order_id` = `order_id`";
-
-	foreach ($orders as $order => $value) {
-		$sth = $db->prepare($sql);
+		$invoice_id = $value['invoice_id'];
 
 		$shipping_methods = json_encode($value['shipping_methods']);
 		$payment_details = json_encode($value['payment_details']);
@@ -318,7 +167,7 @@ function update_orders(array $orders){
 
 		$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
 		$cart_discount = (float)$value['total_discount'];
-		$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
+		$date = date("d-m-Y H:i:s", strtotime(explode(' ', $value['created_at'])[0]));
 		$id = $value['id'];
 		$total_no_format = (float)$value['total']-$cart_discount;
 		$subtotal = number_format(((float)$value['total'] - ($fee+$shipping_total+$cart_discount)), 2, ',', '');
@@ -326,10 +175,10 @@ function update_orders(array $orders){
 		$fee = number_format($fee, 2, ',', '');
 		$shipping_total = number_format($shipping_total, 2, ',', '');
 
-		$subtotal_csv = $date.';-{invoice_id};0;"1010";"";"'.$value['owner_site'].' (ID: '.$id.')";'.$subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-		$shipping_csv = $date.';-{invoice_id};0;"1040";"";"'.$value['owner_site'].' (ID: '.$id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-		$fee_csv = $date.';-{invoice_id};0;"1610";"";"'.$value['owner_site'].' (ID: '.$id.')";'.$fee.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
-		$total_csv = $date.';-{invoice_id};0;"16200";"";"'.$value['owner_site'].' (ID: '.$id.')";-'.$total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+		$subtotal_csv = $date.';-'.$invoice_id.';0;"1010";"";"'.$value['owner_site_name'].' (ID: '.$id.')";'.$subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+		$shipping_csv = $date.';-'.$invoice_id.';0;"1040";"";"'.$value['owner_site_name'].' (ID: '.$id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+		$fee_csv = $date.';-'.$invoice_id.';0;"1610";"";"'.$value['owner_site_name'].' (ID: '.$id.')";'.$fee.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+		$total_csv = $date.';-'.$invoice_id.';0;"16200";"";"'.$value['owner_site_name'].' (ID: '.$id.')";-'.$total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
 
 		if (empty($subtotal)) {
 			$subtotal_csv = '';
@@ -344,7 +193,7 @@ function update_orders(array $orders){
 			$total_csv = '';
 		}
 
-		$export_csv['invoice_'.$id] = [
+		$export_csv = [
 			'separated' => [
 				'subtotal'	=> $subtotal_csv,
 				'shipping'	=> $shipping_csv,
@@ -354,13 +203,16 @@ function update_orders(array $orders){
 			'joined' => $subtotal_csv.$shipping_csv.$fee_csv.$total_csv
 		];
 
-		$export_csv['invoice_'.$id] = json_encode($export_csv['invoice_'.$id]);
+		$export_csv = json_encode($export_csv);
 
-		$sth->bindParam(':owner_site', $value['owner_site']);
+		$sth->bindParam(':invoice_id', $invoice_id);
+		$sth->bindParam(':owner_site_id', $value['owner_site_id']);
+		$sth->bindParam(':owner_site_url', $value['owner_site_url']);
+		$sth->bindParam(':owner_site_name', $value['owner_site_name']);
 		$sth->bindParam(':order_id', $value['id']);
-		$sth->bindParam(':created_at', $value['created_at']);
-		$sth->bindParam(':updated_at', $value['updated_at']);
-		$sth->bindParam(':completed_at', $value['completed_at']);
+		$sth->bindParam(':order_created_at', $value['created_at']);
+		$sth->bindParam(':order_updated_at', $value['updated_at']);
+		$sth->bindParam(':order_completed_at', $value['completed_at']);
 		$sth->bindParam(':status', $value['status']);
 		$sth->bindParam(':currency', $value['currency']);
 		$sth->bindParam(':total', $value['total']);
@@ -384,70 +236,125 @@ function update_orders(array $orders){
 		$sth->bindParam(':tax_lines', $tax_lines);
 		$sth->bindParam(':fee_lines', $fee_lines);
 		$sth->bindParam(':coupon_lines', $coupon_lines);
-		$sth->bindParam(':export_csv', $export_csv['invoice_'.$id]);
+		$sth->bindParam(':export_csv', $export_csv);
 
 		$sth->execute();
+
+		$_SESSION['orders_count'] = $_SESSION['orders_count'] + 1;
 	}
 
 	return true;
 }
 
-function update_next_invoice_number($next_invoice){
+function add_invoices(array $orders){
 	global $db;
-	$name = 'next_invoice';
 
-	$sth = $db->prepare("UPDATE `settings` SET `setting_value` = :next_invoice WHERE `setting_name` = :setting_name");
-	$sth->bindParam(':next_invoice', $next_invoice);
-	$sth->bindParam(':setting_name', $name);
-	
-	if ($sth->execute()) {
-		return true;
+	$next_invoice = get_setting('next_invoice');
+
+	$invoices = get_invoices();
+
+	if (is_null($invoices) || empty($invoices)) {
+		$invoices = [];
 	}
 
-	return false;
+	if (is_null($next_invoice) || empty($next_invoice) || !is_numeric($next_invoice) ) {
+		return false;
+	}
+
+	$sql = "INSERT INTO invoices (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name, :order_id, NOW()) ON DUPLICATE KEY UPDATE `invoice_id` = `invoice_id`";
+
+	foreach ($orders as $order => $value) {
+		$value['invoice_id'] = (int)$next_invoice;
+		$orders['order_'.$value['id']] = $value;
+
+		$sth = $db->prepare($sql);
+
+		$sth->bindParam(':invoice_id', $next_invoice);
+		$sth->bindParam(':owner_site_id', $value['owner_site_id']);
+		$sth->bindParam(':owner_site_url', $value['owner_site_url']);
+		$sth->bindParam(':owner_site_name', $value['owner_site_name']);
+		$sth->bindParam(':order_id', $value['id']);
+
+		$sth->execute();
+
+		$next_invoice = $next_invoice + 1;
+		$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
+	}
+
+	update_setting('next_invoice', $next_invoice);
+
+	return $orders;
 }
 
-function get_sites(){
+function WCApiAddOrdersAndInvoices($sites, $orders, $min_date, $max_date, $limit, $return_only_new_orders = true){
 	global $db;
+	$error = '';
+	foreach ($sites as $site => $val) {
+		$new_orders = get_new_orders($val['url'], $val['consumer_key'], $val['consumer_secret'], $min_date, $max_date, $limit);
 
-	$sth = $db->prepare("SELECT * FROM sites");
+		if ($new_orders === false) {
+			$error .= message('Noget gik galt, tjek dine side indstillinger. (URLs, API Keys)', 'danger');
+		}
+
+		$new_orders = json_decode($new_orders, true)['orders'];
+
+		if (!empty($new_orders) && !is_null($new_orders)) {
+			$new_orders = array_assoc_reverse($new_orders);
+
+			foreach ($new_orders as $new_order => $new_order_val) {
+				//$orders[$site]['order_'.$new_order_val['id']] = $new_order_val; // Merge instead
+				$new_orders['order_'.$new_order_val['id']] = $new_order_val;
+				$new_orders[$new_order] = [];
+				unset($new_orders[$new_order]);
+
+				$new_orders['order_'.$new_order_val['id']]['owner_site_id'] = $val['id'];
+				$new_orders['order_'.$new_order_val['id']]['owner_site_url'] = $val['url'];
+				$new_orders['order_'.$new_order_val['id']]['owner_site_name'] = $val['name'];
+
+				$key_id = $new_order_val['id'].'_'.$site;
+
+				if ( array_key_exists($key_id, $orders) ) { //isset($orders[$key_id]) 
+					unset($new_orders['order_'.$new_order_val['id']]);
+				}
+			}
+
+			/*$res = add_invoices($new_orders);
+
+			if ($res === false) {
+				#Error
+				$error .= message('Noget gik galt, tjek fakturaerne.', 'danger');
+			}
+
+			$res_2 = add_orders($res);
+
+			if ($res_2 === false) {
+				#Error
+				$error .= message('Noget gik galt, tjek orderne.', 'danger');
+			}*/
+
+			$orders_for_site = $orders;
+
+			unset($orders);
+
+			$orders = array_merge($orders_for_site, $new_orders);
+		}
+	}
+
+	if (!empty($new_orders) && !is_null($new_orders)) {
+		krsort($orders);
+	}
+
+	$sth = $db->prepare("UPDATE `settings` SET `setting_value` = NOW() WHERE `setting_name` = 'last_pull_date' ");
 	$sth->execute();
-	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-	$sites = [];
 
-	foreach ($results as $result => $value) {
-		$sites[$value['name']] = $value;
+	if ($error !== '') {
+		return 'false|'.$error;
 	}
 
-	return $sites;
-}
-
-function get_settings(){
-	global $db;
-
-	$sth = $db->prepare("SELECT * FROM settings");
-	$sth->execute();
-	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
-
-	$settings = [];
-
-	foreach ($results as $result => $value) {
-		$settings[$value['name']] = $value;
+	if ($return_only_new_orders) {
+		return $new_orders;
 	}
 
-	return $settings;
+	return $orders;
 }
-
-function array_assoc_reverse(array $arr){
-	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
-}
-
-function pred($arr){
-	echo '<pre>';
-	var_dump($arr);
-	echo '</pre>';
-}
-
-
-?>

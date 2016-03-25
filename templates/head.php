@@ -22,7 +22,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
 		<meta name="application-name" content="<?php echo $global['project_name']; ?>">
 		<meta name="description" content="<?php echo $global['project_name']; ?>">
 		<meta name="robots" content="noodp">
-		<link rel="canonical" href="<?php echo BASE_URL; ?>">
+		<link rel="canonical" href="<?php echo $global['current_url']; ?>">
 
 		<?php /*<!--<link rel="apple-touch-icon" sizes="57x57" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-57x57.png">
 		<link rel="apple-touch-icon" sizes="60x60" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-60x60.png">
@@ -41,16 +41,18 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
 		<link rel="manifest" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/manifest.json">
 		<link rel="shortcut icon" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/favicon.ico">--> */ ?>
 
-		<link rel="shortlink" href="<?php echo BASE_URL; ?>">
+		<link rel="shortlink" href="<?php echo $global['current_url']; ?>">
+
+		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>/css/bootstrap.min.css">
 
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
-		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>css/main.css">
+		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>/css/main.css">
 
 
 		<title><?php echo $global['site_title']; ?></title>
 	</head>
-	<body class="<?php echo $body_class; ?>">
+	<body class="<?php echo $body_class.' '.$global['site_niceurl']; ?>">
 
 
 

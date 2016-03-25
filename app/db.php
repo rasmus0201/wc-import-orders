@@ -27,17 +27,17 @@ foreach ($db_settings as $setting => $value) {
 $message = '';
 
 //date('Y-m-d H:i:s', time());
-//define('BASE_PATH', $db_settings['base_path']);
-//define('BASE_URL', $db_settings['base_url']);
+define('BASE_PATH', $db_settings['base_path']);
+define('BASE_URL', $db_settings['base_url']);
 
 //define('BASE_PATH', getcwd().'/');
 //define('BASE_URL', fullpageurl());
-define('BASE_PATH', '/Applications/MAMP/htdocs/wc-unite-invoices/');
+//define('BASE_PATH', '/Applications/MAMP/htdocs/wc-unite-invoices/');
 
-define('BASE_URL', 'http://localhost:8888/wc-unite-invoices/');
+//define('BASE_URL', 'http://localhost:8888/wc-unite-invoices/');
 
-define('TEMPLATES_URL', BASE_URL.'templates/');
-define('STATIC_URL', BASE_URL.'static/');
+define('TEMPLATES_URL', BASE_URL.'/templates');
+define('STATIC_URL', BASE_URL.'/static');
 
 function fullpageurl() {
     $pageURL = 'http://';

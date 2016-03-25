@@ -50,6 +50,16 @@ function message($str, $type = 'success', $dismissable = true){
 	return $return;
 }
 
+function niceurl($str, $delimiter = '-') {
+	$clean = iconv('UTF-8', 'ASCII//TRANSLIT', $str);
+	$clean = explode('.', $clean)[0];
+	$clean = preg_replace("/[^a-zA-Z0-9\/_|+ -]/", '', $clean);
+	$clean = strtolower(trim($clean, '-'));
+	$clean = preg_replace("/[\/_|+ -]+/", $delimiter, $clean);
+
+	return $clean;
+}
+
 function change_settings($next_invoice, $last_pull_date, $base_url, $base_path){
 	global $db, $db_settings;
 	if (empty($next_invoice) || empty($last_pull_date) || empty($base_url) || empty($base_path)) {
@@ -222,4 +232,70 @@ function add_site($name, $url, $ck, $cs){
 	}
 
 	return message('Noget gik galt.', 'danger');
+}
+
+function update_setting($key, $value){
+	global $db;
+
+	$sth = $db->prepare("UPDATE `settings` SET `setting_value` = :value WHERE `setting_name` = :key");
+	$sth->bindParam(':value', $value);
+	$sth->bindParam(':key', $key);
+	
+	if ($sth->execute()) {
+		return true;
+	}
+
+	return false;
+}
+
+function get_setting($setting){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM `settings` WHERE `setting_name` = :name LIMIT 1");
+	$sth->bindParam(':name', $setting);
+	$sth->execute();
+	$res = $sth->fetch(PDO::FETCH_ASSOC);
+	return $res['setting_value'];
+}
+
+function get_sites(){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM sites");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	$sites = [];
+
+	foreach ($results as $result => $value) {
+		$sites[$value['id']] = $value;
+	}
+
+	return $sites;
+}
+
+function get_settings(){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM settings");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	$settings = [];
+
+	foreach ($results as $result => $value) {
+		$settings[$value['name']] = $value;
+	}
+
+	return $settings;
+}
+
+function array_assoc_reverse(array $arr){
+	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
+}
+
+function pred($arr){
+	echo '<pre>';
+	var_dump($arr);
+	echo '</pre>';
 }

@@ -34,14 +34,14 @@ if ( ($global['current_url'] == 'admin/settings.php') || $global['current_url'] 
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</button>
-			<a class="navbar-brand" href="<?php echo BASE_URL; ?>"><?php echo $global['project_name']; ?></a>
+			<a class="navbar-brand" href="<?php echo BASE_URL; ?>/"><?php echo $global['project_name']; ?></a>
 		</div>
 		<div id="navbar" class="navbar-collapse collapse">
 			<ul class="nav navbar-nav navbar-right">
-				<li class="<?php echo $dashboard_active; ?>"><a href="<?php echo BASE_URL; ?>admin/"><?php echo $titles['admin/index.php']; ?></a></li>
-				<li class="<?php echo $settings_active; ?>"><a href="<?php echo BASE_URL; ?>admin/settings.php"><?php echo $titles['admin/settings.php']; ?></a></li>
-				<li class="<?php echo ($global['current_url'] == 'admin/profile.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
-				<li class="<?php echo ($global['current_url'] == 'admin/logout.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>admin/logout.php"><?php echo $titles['admin/logout.php']; ?></a></li>
+				<li class="<?php echo $dashboard_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/"><?php echo $titles['admin/index.php']; ?></a></li>
+				<li class="<?php echo $settings_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/settings.php"><?php echo $titles['admin/settings.php']; ?></a></li>
+				<li class="<?php echo ($global['current_url'] == 'admin/profile.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
+				<li class="<?php echo ($global['current_url'] == 'admin/logout.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/logout.php"><?php echo $titles['admin/logout.php']; ?></a></li>
 			</ul>
 		</div>
 	</div>

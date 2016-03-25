@@ -71,23 +71,13 @@ body.loggedin .admin-content{
 	padding-bottom: 60px;
 }
 
-
-/*
- * Placeholder dashboard ideas
- */
-body.loggedin .placeholders {
-	margin-bottom: 30px;
-	text-align: center;
+body.loggedin.admin-invoices .page-header .btn,
+body.loggedin.admin-orders .page-header .btn{
+	margin: 0 2.5px;
 }
-body.loggedin .placeholders h4 {
-	margin-bottom: 0;
-}
-body.loggedin .placeholder {
-	margin-bottom: 20px;
-}
-body.loggedin .placeholder img {
-	display: inline-block;
-	border-radius: 50%;
+body.loggedin.admin-invoices .page-header .btn:last-of-type,
+body.loggedin.admin-orders .page-header .btn:last-of-type{
+	margin-right: 0;
 }
 
 body.loggedin .footer{
@@ -107,6 +97,26 @@ body.loggedin .footer{
 	height: 60px;
 	background-color: #f5f5f5;
 }
+
+/*
+ * Placeholder dashboard ideas
+ */
+body.loggedin .placeholders {
+	margin-bottom: 30px;
+	text-align: center;
+}
+body.loggedin .placeholders h4 {
+	margin-bottom: 0;
+}
+body.loggedin .placeholder {
+	margin-bottom: 20px;
+}
+body.loggedin .placeholder img {
+	display: inline-block;
+	border-radius: 50%;
+}
+
+
 
 
 

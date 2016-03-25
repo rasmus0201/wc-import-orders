@@ -37,62 +37,64 @@ if (isset($_POST['add_site'])) {
 	}
 }
 
-if (isset($_GET['site_id']) && isset($_GET['action'])){
-	if ((!empty($_GET['site_id']) && !empty($_GET['action']))){
+$is_action = false;
+
+if (isset($_GET['action'])){
+	if (!empty($_GET['action'])){
 		if ($_GET['action'] != 'edit' && $_GET['action'] != 'delete' && $_GET['action'] != 'add') {
-			header('Location: '.BASE_URL.$global['current_url']);
+			header('Location: '.BASE_URL.'/'.$global['current_url']);
 			exit;
 		}
-		$site_id = $_GET['site_id'];
 
-		if ($site_id == 'new' && $_GET['action'] == 'add') {
+		if ($_GET['action'] == 'add') {
 			$action = 'add';
-		} else {
-
-			$sth = $db->prepare("SELECT id, name, url FROM sites WHERE id = :site_id LIMIT 1");
-			$sth->bindParam(':site_id', $site_id);
-			$sth->execute();
-
-			$site = $sth->fetch(PDO::FETCH_ASSOC);
-
-			if (!$site) {
-				header('Location: '.BASE_URL.$global['current_url']);
-				exit;
-			}
-
-			if ($_GET['action'] == 'edit') {
-				$action = 'edit';
-			} else {
+			$is_action = true;
+		} else if (isset($_GET['site_id'])) {
+			if (!empty($_GET['site_id'])) {
 				$site_id = $_GET['site_id'];
 
-				$sth = $db->prepare("DELETE FROM sites WHERE id = :site_id");
+				$sth = $db->prepare("SELECT id, name, url FROM sites WHERE id = :site_id LIMIT 1");
 				$sth->bindParam(':site_id', $site_id);
+				$sth->execute();
 
-				$result = $sth->execute();
-				$result = true;
+				$site = $sth->fetch(PDO::FETCH_ASSOC);
 
-				if (!$result) {
-					echo message('Noget gik galt.', 'danger');
-				} else {
-					if ($_SESSION['sites_count'] != 0) {
-						$_SESSION['sites_count'] = $_SESSION['sites_count'] - 1;
-					}
-					
-					header('Location: '.BASE_URL.$global['current_url']);
+				if (!$site) {
+					header('Location: '.BASE_URL.'/'.$global['current_url']);
 					exit;
 				}
-			}
-		}
 
-		$is_action = true;
+				if ($_GET['action'] == 'edit') {
+					$action = 'edit';
+					$is_action = true;
+				} else {
+
+					$sth = $db->prepare("DELETE FROM sites WHERE id = :site_id");
+					$sth->bindParam(':site_id', $site_id);
+
+					$result = $sth->execute();
+					$result = true;
+
+					if (!$result) {
+						echo message('Noget gik galt.', 'danger');
+					} else {
+						if ($_SESSION['sites_count'] != 0) {
+							$_SESSION['sites_count'] = $_SESSION['sites_count'] - 1;
+						}
+						
+						header('Location: '.BASE_URL.'/'.$global['current_url']);
+						exit;
+					}
+				}
+			}
+		} else {
+			$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+		}
 	} else {
-		$is_action = message('En fejl opstod, gå tilbage til Dasboard.', 'danger', false);
+		$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
 	}
 } else {
-	$is_action = false;
-	$sth = $db->prepare("SELECT id, name, url FROM sites");
-	$sth->execute();
-	$sites = $sth->fetchAll(PDO::FETCH_ASSOC);
+	$sites = get_sites();
 }
 
 require '../templates/admin-header.php';
@@ -103,7 +105,7 @@ require '../templates/admin-header.php';
 	<?php require '../templates/admin-sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php if ($is_action) : ?>
-			<?php if ($is_action == true) : ?>
+			<?php if ($is_action === true) : ?>
 				<?php echo $message; ?>
 				<?php if($action == 'edit'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/settings.php'].' / '.$global['site_title']; ?> / <?php echo $site['name']; ?> <span class="pull-right"><a class="btn btn-danger" href="?site_id=<?php echo $site['id']; ?>&action=delete" role="button">Slet</a></span></h1>
@@ -182,7 +184,7 @@ require '../templates/admin-header.php';
 				<?php echo $is_action; ?>
 			<?php endif; ?>
 		<?php else: ?>
-			<h1 class="page-header"><?php echo $titles['admin/settings.php'].' / '.$global['site_title']; ?> <span class="pull-right"><a class="btn btn-success" href="?site_id=new&action=add" role="button">Tilføj side</a></span></h1>
+			<h1 class="page-header"><?php echo $titles['admin/settings.php'].' / '.$global['site_title']; ?> <span class="pull-right"><a class="btn btn-success" href="?action=add" role="button">Tilføj side</a></span></h1>
 			<?php if(!empty($sites)): ?>
 				<div class="table-responsive">
 					<table class="table table-striped">

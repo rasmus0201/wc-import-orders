@@ -2,9 +2,9 @@
 
 require_once 'db.php';
 
-require_once 'wc-api.php';
 require_once 'functions.php';
 require_once 'user.php';
+require_once 'wc-api.php';
 
 if (!defined('BASE_URL')) {
 	header('HTTP/1.0 404 not found');
@@ -12,7 +12,7 @@ if (!defined('BASE_URL')) {
 	exit;
 }
 
-$current_url = str_replace(BASE_PATH,'',$_SERVER["SCRIPT_FILENAME"]);
+$current_url = str_replace(BASE_PATH.'/','',$_SERVER["SCRIPT_FILENAME"]);
 $global['current_url'] = $current_url;
 $global['project_name'] = 'ULVEMOSENS HANDELSSELSKAB / Administrationsside';
 
@@ -22,7 +22,7 @@ $titles = [
 	'admin/profile.php' => 'Profil',
 	'admin/settings.php' => 'Indstillinger',
 	'admin/orders.php' => 'Ordre',
-	'admin/reports.php' => 'Raporter',
+	'admin/reports.php' => 'Rapporter',
 	'admin/invoices.php' => 'Fakturaer',
 	'admin/sites.php' => 'WC shops',
 	'admin/logout.php' => 'Log ud',
@@ -30,14 +30,17 @@ $titles = [
 
 if (array_key_exists($global['current_url'], $titles)) {
 	$global['site_title'] = $titles[$global['current_url']];
+	$global['site_niceurl'] = niceurl($global['current_url']);
 } else {
 	$global['site_title'] = $global['project_name'];
+	$global['site_niceurl'] = niceurl($global['site_title']);
 }
+
 
 $min_date = ['y'=>2016,'m'=>1,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
 $max_date = 0;#['y'=>2016,'m'=>2,'d'=>1,'h'=>0,'i'=>0,'s'=>0]; // User input
 
-$limit = -1; // User input / from settings array (-1 for all)
+$limit = 7; // User input / from settings array (-1 for all)
 
 //$sites = get_sites();
 //$orders = get_orders();
@@ -62,8 +65,11 @@ $limit = -1; // User input / from settings array (-1 for all)
 			#Either .csv or as the pdf - (invoice template from jellybeans.dk )
 
 
-#Change site details post
-#Add new site post
+# Lines of code wc api = 2539
+# Lines of code by Rasmus = 1962
+# Lines of code total = 4501
+
+# Terminal = find . -name '*.php' | xargs wc -l
 
 
 
