@@ -54,6 +54,7 @@ require '../templates/admin-header.php';
 	<?php require '../templates/admin-sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php echo $message; ?>
+		<?php echo ($_SESSION['user_role'] == 'superadmin') ? message('Halløj. Du er "superadmin". Tillykke med det!', 'info') : '' ;?>
 		<h1 class="page-header"><?php echo $global['site_title']; ?></h1>
 		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2"><h2 class="sub-header">Skift informationer</h2></div>
 		<form class="form-horizontal" method="post">

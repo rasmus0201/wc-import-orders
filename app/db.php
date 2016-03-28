@@ -26,7 +26,6 @@ foreach ($db_settings as $setting => $value) {
 
 $message = '';
 
-//date('Y-m-d H:i:s', time());
 define('BASE_PATH', $db_settings['base_path']);
 define('BASE_URL', $db_settings['base_url']);
 
@@ -48,3 +47,7 @@ function fullpageurl() {
     }
     return $pageURL;
 }
+
+
+#Inden i .value: <i id="variations_carrot_down" class="arrow_carrot-down"></i>
+

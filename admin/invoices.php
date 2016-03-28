@@ -8,8 +8,37 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	header('Location: '.BASE_URL);
 	exit;
 }
+if (isset($_POST['export_csv'])) {
+	$res = download_csv_orders($_POST['invoices']);
 
-$invoices = get_invoices();
+	if ( !$res ) {
+		header('Location: '.BASE_URL.'/'.$global['current_url']);
+		exit;
+	}
+
+	header('Content-type: text/csv');
+	header('Content-disposition: attachment; filename=Export '.date('Y-m-d H:i:s').'.csv');
+	header('Pragma: no-cache');
+	header('Expires: 0');
+
+	$csvs = explode("\s", $res);
+
+	foreach ($csvs as $csv => $value) {
+		$csv = json_decode($value, true);
+
+		$joins = array_filter(explode("\n", json_decode($csv['export_csv'], true)['joined']));
+
+		foreach ($joins as $join) {
+			if (!is_null($join) && !empty($join)) {
+				echo $join."\n";
+			}
+		}
+	}
+
+	exit;
+} else {
+	$invoices = get_invoices();
+}
 
 require '../templates/admin-header.php';
 
@@ -18,7 +47,7 @@ require '../templates/admin-header.php';
 <div class="row">
 	<?php require '../templates/admin-sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-		<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?><span class="pull-right"><a class="btn btn-success" href="orders.php?action=add" role="button">Tilføj ordre</a><a class="btn btn-success" href="orders.php?action=pull" role="button">Hent ordrer</a></span></h1>
+		<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?><span class="pull-right"><a class="btn btn-success" href="orders.php?action=add" role="button">Tilføj ordre</a><a class="btn btn-success" href="orders.php?action=pull" role="button">Importér ordrer</a></span></h1>
 		<?php if(!empty($invoices)): ?>
 			<form class="form-horizontal" method="post">
 				<input class="btn btn-default" type="submit" name="export_csv" value="Eksportér CSV">

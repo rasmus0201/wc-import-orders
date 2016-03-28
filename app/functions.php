@@ -290,6 +290,31 @@ function get_settings(){
 	return $settings;
 }
 
+function download_csv_orders($orders){
+	if (is_null($orders) || empty($orders) ) {
+		return false;
+	}
+	global $db;
+
+	$sql = "SELECT export_csv FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+
+	$csv = '';
+
+	foreach ($orders as $order => $value) {
+		if ($value == 'on') {
+			$invoice_id = explode('_', $order)[1];
+			$sth = $db->prepare($sql);
+			$sth->bindParam(':invoice_id', $invoice_id);
+
+			$sth->execute();
+
+			$csv .= json_encode($sth->fetch(PDO::FETCH_ASSOC))."\s";
+		}
+	}
+
+	return $csv;
+}
+
 function array_assoc_reverse(array $arr){
 	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
 }

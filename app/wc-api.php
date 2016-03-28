@@ -18,7 +18,7 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 
 	$fields = 'id,order_number,created_at,updated_at,completed_at,status,currency,total,subtotal,total_line_items_quantity,total_tax,total_shipping,cart_tax,shipping_tax,total_discount,shipping_methods,payment_details,billing_address,shipping_address,note,customer_ip,customer_id,view_order_url,line_items,shipping_lines,tax_lines,fee_lines,coupon_lines';
 
-	if ($min_date['m'] < 10) {
+	/*if ($min_date['m'] < 10) {
 		$min_date['m'] = '0'.$min_date['m'];
 	}
 	if ($min_date['d'] < 10) {
@@ -52,7 +52,7 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 		if ($max_date['s'] < 10) {
 			$max_date['s'] = '0'.$max_date['s'];
 		}
-	}
+	}*/
 
 	try {
 		$client = new WC_API_Client( $site, $ck, $cs, $options );
@@ -92,10 +92,10 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 		//echo json_encode($e->getMessage() . PHP_EOL);
 		if ( $e instanceof WC_API_Client_HTTP_Exception ) {
 			//echo json_encode($e->get_request());
-			//echo json_encode($e->get_response());
+			echo json_encode($e->get_response());
 		}
 
-		//return $e->getCode();
+		//echo $e->getCode();
 		return false;
 	}
 }
@@ -167,7 +167,7 @@ function add_orders(array $orders){
 
 		$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
 		$cart_discount = (float)$value['total_discount'];
-		$date = date("d-m-Y H:i:s", strtotime(explode(' ', $value['created_at'])[0]));
+		$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
 		$id = $value['id'];
 		$total_no_format = (float)$value['total']-$cart_discount;
 		$subtotal = number_format(((float)$value['total'] - ($fee+$shipping_total+$cart_discount)), 2, ',', '');
@@ -318,19 +318,19 @@ function WCApiAddOrdersAndInvoices($sites, $orders, $min_date, $max_date, $limit
 				}
 			}
 
-			/*$res = add_invoices($new_orders);
+			$res = add_invoices($new_orders);
 
 			if ($res === false) {
 				#Error
-				$error .= message('Noget gik galt, tjek fakturaerne.', 'danger');
+				$error .= message('Ordrer eksisterer allerede.', 'danger');
 			}
 
 			$res_2 = add_orders($res);
 
 			if ($res_2 === false) {
 				#Error
-				$error .= message('Noget gik galt, tjek orderne.', 'danger');
-			}*/
+				$error .= message('Ordrer eksisterer allerede.', 'danger');
+			}
 
 			$orders_for_site = $orders;
 

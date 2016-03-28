@@ -80,6 +80,10 @@ body.loggedin.admin-orders .page-header .btn:last-of-type{
 	margin-right: 0;
 }
 
+.order_line .name{
+	text-transform: capitalize;
+}
+
 body.loggedin .footer{
 	position: fixed;
 	bottom: 0;

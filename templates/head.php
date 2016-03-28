@@ -24,7 +24,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
 		<meta name="robots" content="noodp">
 		<link rel="canonical" href="<?php echo $global['current_url']; ?>">
 
-		<?php /*<!--<link rel="apple-touch-icon" sizes="57x57" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-57x57.png">
+		<?php /*<link rel="apple-touch-icon" sizes="57x57" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-57x57.png">
 		<link rel="apple-touch-icon" sizes="60x60" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-60x60.png">
 		<link rel="apple-touch-icon" sizes="72x72" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-72x72.png">
 		<link rel="apple-touch-icon" sizes="76x76" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/apple-touch-icon-76x76.png">
@@ -39,13 +39,13 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
 		<link rel="icon" type="image/png" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/android-chrome-192x192.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/favicon-16x16.png" sizes="16x16">
 		<link rel="manifest" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/manifest.json">
-		<link rel="shortcut icon" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/favicon.ico">--> */ ?>
+		<link rel="shortcut icon" href="http://jellybeans.dk/wp-content/themes/klasik-child/images/favicon.ico"> */ ?>
 
 		<link rel="shortlink" href="<?php echo $global['current_url']; ?>">
 
 		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>/css/bootstrap.min.css">
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<?php /*<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"> */ ?>
 
 		<link rel="stylesheet" href="<?php echo STATIC_URL; ?>/css/main.css">
 
