@@ -74,6 +74,57 @@ function logout(){
 	exit;
 }
 
+function add_user($name, $email, $role, $password, $confirm_password){
+	global $db;
+
+	if (empty($name) || empty($email) || empty($role) || empty($password) || empty($confirm_password)) {
+		$_SESSION['form_error'] = true;
+		return message('Alle felter skal udfyldes.', 'danger');
+	} else if (strlen($name) > 100) {
+		$_SESSION['form_error'] = true;
+		return message('"Navn" må ikke overstige 100 tegn.', 'danger');
+	} else if (strlen($email) > 100) {
+		$_SESSION['form_error'] = true;
+		return message('"E-mail" må ikke overstige 100 tegn.', 'danger');
+	} else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		$_SESSION['form_error'] = true;
+		return message('"E-mail" skal være en rigtigt e-mail.', 'danger');
+	} else if ($confirm_password != $password) {
+		$_SESSION['form_error'] = true;
+		return message('Passwords skal være ens.', 'danger');
+	} else if (strlen($password) > 50) {
+		$_SESSION['form_error'] = true;
+		return message('"Password" må ikke overstige 50 tegn.', 'danger');
+	} else if (strlen($password) < 8) {
+		$_SESSION['form_error'] = true;
+		return message('"Password" skal være minimum 8 tegn.', 'danger');
+	} else if ($role != 'viewer' && $role != 'accountant' && $role != 'admin' && $role != 'superadmin') {
+		$_SESSION['form_error'] = true;
+		return message('"Rolle" skal være en gyldig rolle.', 'danger');
+	} else if (get_user_by_email($email)) {
+		$_SESSION['form_error'] = true;
+		return message('E-mail er allerede i brug.', 'danger');
+	}
+
+	$bcrypt = new Bcrypt(12);
+
+	$hash = $bcrypt->hash($password);
+
+	$sth = $db->prepare("INSERT INTO users SET email = :email, name = :name, password = :password, role = :role");
+	$sth->bindParam(':email', $email);
+	$sth->bindParam(':name', $name);
+	$sth->bindParam(':password', $hash);
+	$sth->bindParam(':role', $role);
+
+	$result = $sth->execute();
+
+	if ($result) {
+		return true;
+	}
+
+	return message('Noget gik galt.', 'danger');
+}
+
 function change_user_details($email, $name){
 	global $db;
 	if (empty($email) || empty($name)) {
@@ -86,11 +137,17 @@ function change_user_details($email, $name){
 		
 		return message('Alle felter skal udfyldes.', 'danger');
 	} else if (strlen($name) > 100) {
+		$_SESSION['user_name_error'] = true;
 		return message('"Navn" må ikke overstige 100 tegn.', 'danger');
 	} else if (strlen($email) > 100) {
+		$_SESSION['user_email_error'] = true;
 		return message('"E-mail" må ikke overstige 100 tegn.', 'danger');
 	} else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		$_SESSION['user_email_error'] = true;
 		return message('"E-mail" skal være en rigtigt e-mail.', 'danger');
+	} else if (get_user_by_email($email) && $email != $_SESSION['user_email']) {
+		$_SESSION['user_email_error'] = true;
+		return message('E-mail er allerede i brug.', 'danger');
 	}
 
 	//Not nessecary to update and make a db call.
@@ -147,6 +204,26 @@ function change_user_password($password, $password_again){
 	}
 
 	return message('Noget gik galt.', 'danger');
+}
+
+function get_user_by_email($email){
+	global $db;
+	$sth = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+	$sth->bindParam(':email', $email);
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
 }
 
 class Bcrypt {

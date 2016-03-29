@@ -60,6 +60,63 @@ function niceurl($str, $delimiter = '-') {
 	return $clean;
 }
 
+function check_user_abilities_min_accountant($return_error = false){
+	if ($_SESSION['user_role'] == 'viewer') {
+		if ($return_error) {
+			display_404();
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+function check_user_abilities_min_admin($return_error = false){
+	if ($_SESSION['user_role'] != 'superadmin' && $_SESSION['user_role'] != 'admin') {
+		if ($return_error) {
+			display_404();
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+function check_user_abilities_superadmin($return_error = false){
+	if ($_SESSION['user_role'] != 'superadmin') {
+		if ($return_error) {
+			display_404();
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+function display_404(){
+	global $global, $titles;
+	header("HTTP/1.0 404 Not Found");
+	require TEMPLATES_PATH.'/admin/header.php';
+
+	?>
+	<div class="row">
+		<?php require TEMPLATES_PATH.'/admin/sidebar.php'; ?>
+		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+			<div class="jumbotron">
+				<h1>404 - Side ikke fundet</h1>
+				<p><a href="<?php echo BASE_URL; ?>/admin"><?php echo $titles['admin/index.php']; ?></a></p>
+			</div>
+		</div>
+	</div>
+	<?php
+
+	require TEMPLATES_PATH.'/admin/footer.php';
+	exit;
+}
+
 function change_settings($next_invoice, $last_pull_date, $base_url, $base_path){
 	global $db, $db_settings;
 	if (empty($next_invoice) || empty($last_pull_date) || empty($base_url) || empty($base_path)) {
@@ -290,11 +347,21 @@ function get_settings(){
 	return $settings;
 }
 
+function get_users(){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM users");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	return $results;
+}
+
 function download_csv_orders($orders){
 	if (is_null($orders) || empty($orders) ) {
 		return false;
 	}
-	global $db;
+	global $db, $global;
 
 	$sql = "SELECT export_csv FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
 
@@ -312,7 +379,31 @@ function download_csv_orders($orders){
 		}
 	}
 
-	return $csv;
+	if ( !$csv ) {
+		header('Location: '.BASE_URL.'/'.$global['current_url']);
+		exit;
+	}
+
+	header('Content-type: text/csv');
+	header('Content-disposition: attachment; filename=Export '.date('Y-m-d H:i:s').'.csv');
+	header('Pragma: no-cache');
+	header('Expires: 0');
+
+	$csvs = explode("\s", $csv);
+
+	foreach ($csvs as $csv => $value) {
+		$csv = json_decode($value, true);
+
+		$joins = array_filter(explode("\n", json_decode($csv['export_csv'], true)['joined']));
+
+		foreach ($joins as $join) {
+			if (!is_null($join) && !empty($join)) {
+				echo $join."\n";
+			}
+		}
+	}
+
+	exit;
 }
 
 function array_assoc_reverse(array $arr){

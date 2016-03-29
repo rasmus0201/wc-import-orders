@@ -9,12 +9,12 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	exit;
 }
 
-require '../templates/admin-header.php';
+require '../templates/admin/header.php';
 
 ?>
 
 <div class="row">
-	<?php require '../templates/admin-sidebar.php'; ?>
+	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?></h1>
 		<div class="row placeholders">
@@ -44,6 +44,6 @@ require '../templates/admin-header.php';
 
 <?php
 
-require '../templates/admin-footer.php';
+require '../templates/admin/footer.php';
 
 ?>

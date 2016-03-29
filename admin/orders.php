@@ -9,7 +9,7 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	exit;
 }
 
-if (isset($_POST['pull_orders'])) {
+if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 	$min_date = explode('-', $_POST['min_date']);
 	$min_time = explode(':', $_POST['min_time']);
 
@@ -27,6 +27,7 @@ if (isset($_POST['pull_orders'])) {
 		$message = explode('|', $orders)[1];
 		$form_error = true;
 	} else {
+		unset($_POST);
 		$message = message('Alle ordre importeret succesfuldt. I alt importeret: '.count($orders));
 	}
 }
@@ -41,11 +42,22 @@ if (isset($_GET['action'])){
 		}
 
 		if ($_GET['action'] == 'add') {
-			$action = 'add';
-			$is_action = true;
+			if(check_user_abilities_min_admin()){
+				$action = 'add';
+				$is_action = true;
+			} else {
+				header('Location: '.BASE_URL.'/'.$global['current_url']);
+				exit;
+			}
+			
 		} else if ($_GET['action'] == 'pull') {
-			$action = 'pull';
-			$is_action = true;
+			if(check_user_abilities_min_admin()){
+				$action = 'pull';
+				$is_action = true;
+			} else {
+				header('Location: '.BASE_URL.'/'.$global['current_url']);
+				exit;
+			}
 		} else if (isset($_GET['invoice_id'])) {
 			if (!empty($_GET['invoice_id'])) {
 				$invoice_id = $_GET['invoice_id'];
@@ -102,12 +114,12 @@ if (isset($_GET['action'])){
 	$orders = get_orders();
 }
 
-require '../templates/admin-header.php';
+require '../templates/admin/header.php';
 
 ?>
 
 <div class="row">
-	<?php require '../templates/admin-sidebar.php'; ?>
+	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php echo $message; ?>
 		<?php if($is_action): ?>
@@ -317,7 +329,7 @@ require '../templates/admin-header.php';
 						</div>
 						<div class="col-sm-12"><h3>Kundedetaljer</h3></div>
 						<div class="col-sm-6">
-							<h5>Faktureringsadresse</h5>
+							<h5>Faktureringsoplysninger</h5>
 							<div class="table-responsive">
 								<table class="table table-condensed">
 									<tr>
@@ -361,7 +373,7 @@ require '../templates/admin-header.php';
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<h5>Leveringsadresse</h5>
+							<h5>Forsendelsesoplysninger</h5>
 							<div class="table-responsive">
 								<table class="table table-condensed">
 									<tr>
@@ -408,7 +420,7 @@ require '../templates/admin-header.php';
 				<?php echo $is_action; ?>
 			<?php endif; ?>
 		<?php else: ?>
-			<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?><span class="pull-right"><a class="btn btn-success" href="orders.php?action=add" role="button">Tilføj ordre</a><a class="btn btn-success" href="orders.php?action=pull" role="button">Importér ordrer</a></span></h1>
+			<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?><?php if(check_user_abilities_min_admin()): ?><span class="pull-right"><a class="btn btn-success" href="orders.php?action=add" role="button">Tilføj ordre</a><a class="btn btn-success" href="orders.php?action=pull" role="button">Importér ordrer</a></span><?php endif; ?></h1>
 			<?php if(!empty($orders)): ?>
 				<form class="form-horizontal" method="post">
 					<div class="table-responsive">
@@ -445,6 +457,6 @@ require '../templates/admin-header.php';
 
 <?php
 
-require '../templates/admin-footer.php';
+require '../templates/admin/footer.php';
 
 ?>

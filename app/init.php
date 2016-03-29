@@ -25,6 +25,7 @@ $titles = [
 	'admin/reports.php' => 'Rapporter',
 	'admin/invoices.php' => 'Fakturaer',
 	'admin/sites.php' => 'WC shops',
+	'admin/users.php' => 'Brugere',
 	'admin/logout.php' => 'Log ud',
 ];
 
@@ -35,30 +36,3 @@ if (array_key_exists($global['current_url'], $titles)) {
 	$global['site_title'] = $global['project_name'];
 	$global['site_niceurl'] = niceurl($global['site_title']);
 }
-
-//$_SESSION['invoices_count'] = 0;
-//$_SESSION['orders_count'] = 0;
-
-#Login, Logout, Register function
-	#Make "Administration panel admin-panel"
-#User Interface
-	#invoice/order Tables: Order by date, id, or total-order-price, or name
-	#Make some reports (daily, weekly, monthly, yearly, custom)
-		#See vat, subtotal, total, shipping, shipping vat, fees
-		#Also see dates and other info.
-	#Export
-		#Choose invoices
-			#Either from invoice_xx to invoice_yy or by date
-		#Choose the export form 
-			#PDF
-
-
-# Lines of code wc api = 2539
-# Lines of code by Rasmus = 1962
-# Lines of code total = 4501
-
-# Terminal = find . -name '*.php' | xargs wc -l
-
-
-
-

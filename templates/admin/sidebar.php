@@ -15,8 +15,16 @@ if (!defined('BASE_URL')) {
 		<li class="<?php echo ($global['current_url'] == 'admin/invoices.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/invoices.php">- <?php echo $titles['admin/invoices.php']; ?><span class="badge pull-right"><?php echo $_SESSION['invoices_count']; ?></span></a></li>
 		
 	</ul>
+	<?php if(check_user_abilities_min_admin()): ?>
+		<ul class="nav nav-sidebar">
+			<li class="<?php echo ($global['current_url'] == 'admin/settings.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/settings.php"><?php echo $titles['admin/settings.php']; ?></a></li>
+			<li class="<?php echo ($global['current_url'] == 'admin/sites.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/sites.php">- <?php echo $titles['admin/sites.php']; ?><span class="badge pull-right"><?php echo $_SESSION['sites_count']; ?></span></a></li>
+		</ul>
+	<?php endif; ?>
 	<ul class="nav nav-sidebar">
-		<li class="<?php echo ($global['current_url'] == 'admin/settings.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/settings.php"><?php echo $titles['admin/settings.php']; ?></a></li>
-		<li class="<?php echo ($global['current_url'] == 'admin/sites.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/sites.php">- <?php echo $titles['admin/sites.php']; ?><span class="badge pull-right"><?php echo $_SESSION['sites_count']; ?></span></a></li>
+		<li class="<?php echo ($global['current_url'] == 'admin/profile.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
+		<?php if($_SESSION['user_role'] == 'superadmin' || $_SESSION['user_role'] == 'admin'): ?>
+			<li class="<?php echo ($global['current_url'] == 'admin/users.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/users.php">- <?php echo $titles['admin/users.php']; ?></a></li>
+		<?php endif; ?>
 	</ul>
 </div>

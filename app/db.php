@@ -38,6 +38,9 @@ define('BASE_URL', $db_settings['base_url']);
 define('TEMPLATES_URL', BASE_URL.'/templates');
 define('STATIC_URL', BASE_URL.'/static');
 
+define('TEMPLATES_PATH', BASE_PATH.'/templates');
+define('STATIC_PATH', BASE_PATH.'/static');
+
 function fullpageurl() {
     $pageURL = 'http://';
     if ($_SERVER["SERVER_PORT"] != "80") {
@@ -49,5 +52,33 @@ function fullpageurl() {
 }
 
 
-#Inden i .value: <i id="variations_carrot_down" class="arrow_carrot-down"></i>
+//$_SESSION['invoices_count'] = 0;
+//$_SESSION['orders_count'] = 0;
+
+#Login, Logout, Register function
+	#Make "Administration panel admin-panel"
+#User Interface
+	#invoice/order Tables: Order by date, id, or total-order-price, or name
+	#Make some reports (daily, weekly, monthly, yearly, custom)
+		#See vat, subtotal, total, shipping, shipping vat, fees
+		#Also see dates and other info.
+	#Export
+		#Choose invoices
+			#Either from invoice_xx to invoice_yy or by date
+		#Choose the export form 
+			#PDF
+
+
+# Lines of code wc api = 2539
+# Lines of code by Rasmus = 1962
+# Lines of code total = 4501
+
+# Lines now = 4963
+# Lines now = 5427
+
+# Terminal = find . -name '*.php' | xargs wc -l
+
+
+
+
 

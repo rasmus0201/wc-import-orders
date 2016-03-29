@@ -14,6 +14,7 @@ if (isset($_POST['change_user_details'])) {
 	$result = change_user_details($_POST['email'], $_POST['name']);
 
 	if ($result === true) {
+		unset($_POST);
 		$message = message('Ændringer blev gemt succesfuldt.', 'success');
 	} else {
 		$message = $result;
@@ -33,6 +34,7 @@ if (isset($_POST['change_user_password'])) {
 	$result = change_user_password($_POST['password'], $_POST['password_again']);
 
 	if ($result === true) {
+		unset($_POST);
 		$message = message('Ændringer blev gemt succesfuldt.', 'success');
 	} else {
 		$message = $result;
@@ -44,17 +46,17 @@ if (isset($_POST['change_user_password'])) {
 	}
 }
 
-require '../templates/admin-header.php';
+require '../templates/admin/header.php';
 
 ?>
 
 
 
 <div class="row">
-	<?php require '../templates/admin-sidebar.php'; ?>
+	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php echo $message; ?>
-		<?php echo ($_SESSION['user_role'] == 'superadmin') ? message('Halløj. Du er "superadmin". Tillykke med det!', 'info') : '' ;?>
+		<?php echo (check_user_abilities_superadmin()) ? message('Halløj. Du er "superadmin". Tillykke med det!', 'info') : '' ;?>
 		<h1 class="page-header"><?php echo $global['site_title']; ?></h1>
 		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2"><h2 class="sub-header">Skift informationer</h2></div>
 		<form class="form-horizontal" method="post">
@@ -110,6 +112,6 @@ require '../templates/admin-header.php';
 <?php
 
 
-require '../templates/admin-footer.php';
+require '../templates/admin/footer.php';
 
 ?>

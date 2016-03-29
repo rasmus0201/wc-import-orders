@@ -8,11 +8,13 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	header('Location: '.BASE_URL);
 	exit;
 }
+check_user_abilities_min_admin(true);
 
 if (isset($_POST['add_site'])) {
 	$result = add_site($_POST['name'], $_POST['url'], $_POST['consumer_key'], $_POST['consumer_secret']);
 	
 	if ($result === true) {
+		unset($_POST);
 		$message = message('Siden blev tilføjet succesfuldt.');
 	} else {
 		$message = $result;
@@ -26,6 +28,7 @@ if (isset($_POST['add_site'])) {
 	$result = change_site_details($_GET['site_id'], $_POST['name'], $_POST['old_url'], $_POST['new_url'], $_POST['consumer_key'], $_POST['consumer_secret']);
 
 	if ($result === true) {
+		unset($_POST);
 		$message = message('Siden blev ændret succesfuldt.');
 	} else {
 		$message = $result;
@@ -97,12 +100,12 @@ if (isset($_GET['action'])){
 	$sites = get_sites();
 }
 
-require '../templates/admin-header.php';
+require '../templates/admin/header.php';
 
 ?>
 
 <div class="row">
-	<?php require '../templates/admin-sidebar.php'; ?>
+	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php if ($is_action) : ?>
 			<?php if ($is_action === true) : ?>
@@ -220,6 +223,6 @@ require '../templates/admin-header.php';
 
 <?php
 
-require '../templates/admin-footer.php';
+require '../templates/admin/footer.php';
 
 ?>

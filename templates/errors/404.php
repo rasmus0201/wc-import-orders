@@ -6,11 +6,11 @@ require '../../app/init.php';
 $loggedin = false;
 
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
-	require '../admin-header.php';
+	require '../admin/header.php';
 
 	?>
 	<div class="row">
-		<?php require '../admin-sidebar.php'; ?>
+		<?php require '../admin/sidebar.php'; ?>
 		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 			<div class="jumbotron">
 				<h1>404 - Side ikke fundet</h1>
@@ -20,7 +20,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin']) {
 	</div>
 	<?php
 
-	require '../admin-footer.php';
+	require '../admin/footer.php';
 	exit;
 }
 

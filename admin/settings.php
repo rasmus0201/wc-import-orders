@@ -10,10 +10,13 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	exit;
 }
 
+check_user_abilities_min_admin(true);
+
 if (isset($_POST['change_settings'])) {
 	$result = change_settings($_POST['next_invoice'], $_POST['last_pull_date'], $_POST['base_url'], $_POST['base_path']);
 
 	if ($result === true) {
+		unset($_POST);
 		$message = message('Ændringer blev gemt succesfuldt.', 'success');
 	} else {
 		$message = $result;
@@ -26,13 +29,13 @@ if (isset($_POST['change_settings'])) {
 }
 
 
-require '../templates/admin-header.php';
+require '../templates/admin/header.php';
 
 ?>
 
 
 <div class="row">
-	<?php require '../templates/admin-sidebar.php'; ?>
+	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<?php echo $message; ?>
 		<h1 class="page-header"><?php echo $global['site_title']; ?></h1>
@@ -75,6 +78,6 @@ require '../templates/admin-header.php';
 <?php
 
 
-require '../templates/admin-footer.php';
+require '../templates/admin/footer.php';
 
 ?>
