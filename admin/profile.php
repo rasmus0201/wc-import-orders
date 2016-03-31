@@ -11,7 +11,7 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 }
 
 if (isset($_POST['change_user_details'])) {
-	$result = change_user_details($_POST['email'], $_POST['name']);
+	$result = change_user_details($_SESSION['user_id'], $_POST['email'], $_POST['name'], $_POST['role']);
 
 	if ($result === true) {
 		unset($_POST);
@@ -28,10 +28,14 @@ if (isset($_POST['change_user_details'])) {
 		$user_name_error = true;
 		unset($_SESSION['user_name_error']);
 	}
+	if (isset($_SESSION['user_role_error'])) {
+		$user_role_error = true;
+		unset($_SESSION['user_role_error']);
+	}
 }
 
 if (isset($_POST['change_user_password'])) {
-	$result = change_user_password($_POST['password'], $_POST['password_again']);
+	$result = change_user_password($_SESSION['user_id'], $_POST['password'], $_POST['password_again']);
 
 	if ($result === true) {
 		unset($_POST);
@@ -72,10 +76,40 @@ require '../templates/admin/header.php';
 					<input required type="text" class="form-control" name="name" id="name" placeholder="Fulde navn" value="<?php echo (isset($_POST['name'])) ? $_POST['name'] : $_SESSION['user_name']; ?>">
 				</div>
 			</div>
-			<div class="form-group">
+			<div class="form-group <?php echo (isset($user_role_error)) ? 'has-error' : '' ;?>">
 				<label for="role" class="col-sm-2 control-label">Rolle</label>
 				<div class="col-sm-10">
-					<input type="text" disabled class="form-control" id="role" placeholder="Rolle" value="<?php echo $_SESSION['user_role']; ?>">
+					<?php
+						if ($_SESSION['user_role'] == 'superadmin') {
+							$role = 'Superadministrator';
+						} else if($_SESSION['user_role'] == 'admin'){
+							$role = 'Administrator';
+						} else if($_SESSION['user_role'] == 'accountant'){
+							$role = 'Bogholder / Revisor';
+						} else if($_SESSION['user_role'] == 'viewer'){
+							$role = 'Seer';
+						} else {
+							$role = 'Ukendt';
+						}
+					?>
+					<?php if(check_user_abilities_superadmin()): ?>
+						<select class="form-control" name="role" id="role">
+							<?php if (isset($_POST['role'])): ?>
+								<option <?php echo ($_POST['role'] == 'viewer') ? 'selected' : '' ; ?> value="viewer">Seer</option>
+								<option <?php echo ($_POST['role'] == 'accountant') ? 'selected' : '' ; ?> value="accountant">Bogholder / Revisor</option>
+								<option <?php echo ($_POST['role'] == 'admin') ? 'selected' : '' ; ?> value="admin">Administrator</option>
+								<option <?php echo ($_POST['role'] == 'superadmin') ? 'selected' : '' ; ?> value="superadmin">Superadministrator</option>
+							<?php else: ?>
+								<option value="viewer">Seer</option>
+								<option value="accountant">Bogholder / Revisor</option>
+								<option value="admin">Administrator</option>
+								<option selected value="superadmin">Superadministrator</option>
+							<?php endif; ?>
+						</select>
+					<?php else: ?>
+						<input type="hidden" name="role" value="<?php echo $_SESSION['user_role']; ?>">
+						<input type="text" disabled class="form-control" id="role" placeholder="Rolle" value="<?php echo $role; ?>">
+					<?php endif; ?>
 				</div>
 			</div>
 			<div class="form-group">

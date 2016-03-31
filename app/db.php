@@ -24,50 +24,31 @@ foreach ($db_settings as $setting => $value) {
 	unset($db_settings[$value['id']-1]);
 }
 
-$message = '';
-
 define('BASE_PATH', $db_settings['base_path']);
-define('BASE_URL', $db_settings['base_url']);
-
-//define('BASE_PATH', getcwd().'/');
-//define('BASE_URL', fullpageurl());
-//define('BASE_PATH', '/Applications/MAMP/htdocs/wc-unite-invoices/');
-
-//define('BASE_URL', 'http://localhost:8888/wc-unite-invoices/');
-
-define('TEMPLATES_URL', BASE_URL.'/templates');
-define('STATIC_URL', BASE_URL.'/static');
-
 define('TEMPLATES_PATH', BASE_PATH.'/templates');
 define('STATIC_PATH', BASE_PATH.'/static');
 
-function fullpageurl() {
-    $pageURL = 'http://';
-    if ($_SERVER["SERVER_PORT"] != "80") {
-        $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
-    } else {
-        $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-    }
-    return $pageURL;
-}
+define('BASE_URL', $db_settings['base_url']);
+define('TEMPLATES_URL', BASE_URL.'/templates');
+define('STATIC_URL', BASE_URL.'/static');
+
+$message = '';
 
 
 //$_SESSION['invoices_count'] = 0;
 //$_SESSION['orders_count'] = 0;
 
-#Login, Logout, Register function
-	#Make "Administration panel admin-panel"
-#User Interface
-	#invoice/order Tables: Order by date, id, or total-order-price, or name
-	#Make some reports (daily, weekly, monthly, yearly, custom)
-		#See vat, subtotal, total, shipping, shipping vat, fees
-		#Also see dates and other info.
-	#Export
-		#Choose invoices
-			#Either from invoice_xx to invoice_yy or by date
-		#Choose the export form 
-			#PDF
+#Make some reports (daily, weekly, monthly, yearly, custom)
+	#See vat, subtotal, total, shipping, shipping vat, fees, sold products (+amounts etc.)
+	#Also see dates and other info.
 
+#Sort orders/invoices/users table by date/order_id/site/total-order-price/name/invoice_id and id/name/email/role
+#Make pdf template
+#Export (both .csv and .pdf)
+	#from_date - to_date
+	#invoice_xx to invoice_yy
+#Edit orders
+#Add orders directly
 
 # Lines of code wc api = 2539
 # Lines of code by Rasmus = 1962

@@ -11,7 +11,17 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 check_user_abilities_min_admin(true);
 
 if (isset($_POST['add_site'])) {
-	$result = add_site($_POST['name'], $_POST['url'], $_POST['consumer_key'], $_POST['consumer_secret']);
+	$result = add_site(
+		$_POST['name'],
+		$_POST['url'], 
+		$_POST['consumer_key'], 
+		$_POST['consumer_secret'], 
+		$_POST['address'], 
+		$_POST['postcode'], 
+		$_POST['city'], 
+		$_POST['company_name'], 
+		$_POST['company_vat'], 
+		$_POST['company_logo_url']);
 	
 	if ($result === true) {
 		unset($_POST);
@@ -25,7 +35,20 @@ if (isset($_POST['add_site'])) {
 		unset($_SESSION['form_error']);
 	}
 } else if (isset($_POST['change_site_details'])) {
-	$result = change_site_details($_GET['site_id'], $_POST['name'], $_POST['old_url'], $_POST['new_url'], $_POST['consumer_key'], $_POST['consumer_secret']);
+	$result = change_site_details(
+		$_GET['site_id'], 
+		$_POST['name'], 
+		$_POST['old_url'], 
+		$_POST['new_url'], 
+		$_POST['consumer_key'], 
+		$_POST['consumer_secret'], 
+		$_POST['address'], 
+		$_POST['postcode'], 
+		$_POST['city'], 
+		$_POST['company_name'], 
+		$_POST['company_vat'], 
+		$_POST['company_logo_url']
+		);
 
 	if ($result === true) {
 		unset($_POST);
@@ -56,11 +79,7 @@ if (isset($_GET['action'])){
 			if (!empty($_GET['site_id'])) {
 				$site_id = $_GET['site_id'];
 
-				$sth = $db->prepare("SELECT id, name, url FROM sites WHERE id = :site_id LIMIT 1");
-				$sth->bindParam(':site_id', $site_id);
-				$sth->execute();
-
-				$site = $sth->fetch(PDO::FETCH_ASSOC);
+				$site = get_site_by_id($site_id);
 
 				if (!$site) {
 					header('Location: '.BASE_URL.'/'.$global['current_url']);
@@ -72,11 +91,7 @@ if (isset($_GET['action'])){
 					$is_action = true;
 				} else {
 
-					$sth = $db->prepare("DELETE FROM sites WHERE id = :site_id");
-					$sth->bindParam(':site_id', $site_id);
-
-					$result = $sth->execute();
-					$result = true;
+					$result = delete_site_by_id($site_id);
 
 					if (!$result) {
 						echo message('Noget gik galt.', 'danger');
@@ -111,7 +126,7 @@ require '../templates/admin/header.php';
 			<?php if ($is_action === true) : ?>
 				<?php echo $message; ?>
 				<?php if($action == 'edit'): ?>
-					<h1 class="page-header"><?php echo $titles['admin/settings.php'].' / '.$global['site_title']; ?> / <?php echo $site['name']; ?> <span class="pull-right"><a class="btn btn-danger" href="?site_id=<?php echo $site['id']; ?>&action=delete" role="button">Slet</a></span></h1>
+					<h1 class="page-header"><?php echo $titles['admin/settings.php'].' / '.$global['site_title']; ?> / Rediger <span class="pull-right"><a class="btn btn-danger" href="?site_id=<?php echo $site['id']; ?>&action=delete" role="button">Slet</a></span></h1>
 					<form class="form-horizontal" method="post">
 						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
 							<label for="name" class="col-sm-2 control-label">Navn</label>
@@ -135,7 +150,44 @@ require '../templates/admin/header.php';
 						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
 							<label for="consumer_secret" class="col-sm-2 control-label">consumer_secret</label>
 							<div class="col-sm-10">
-								<input type="text" class="form-control" name="consumer_secret" id="role" placeholder="Bliver ikke vist igen, kun gemt!" value="<?php echo (isset($_POST['consumer_secret'])) ? $_POST['consumer_secret'] : ''; ?>">
+								<input type="text" class="form-control" name="consumer_secret" id="consumer_secret" placeholder="Bliver ikke vist igen, kun gemt!" value="<?php echo (isset($_POST['consumer_secret'])) ? $_POST['consumer_secret'] : ''; ?>">
+							</div>
+						</div>
+						<hr class="separator">
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="address" class="col-sm-2 control-label">Adresse</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="address" id="address" placeholder="Testvej 1" value="<?php echo (isset($_POST['address'])) ? $_POST['address'] : $site['address']; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="postcode" class="col-sm-2 control-label">Postnummer</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="postcode" id="postcode" placeholder="1234" value="<?php echo (isset($_POST['postcode'])) ? $_POST['postcode'] : $site['postcode']; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="city" class="col-sm-2 control-label">By</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="city" id="city" placeholder="Testby" value="<?php echo (isset($_POST['city'])) ? $_POST['city'] : $site['city']; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_name" class="col-sm-2 control-label">Virksomhedsnavn</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="company_name" id="company_name" placeholder="Test virksomhed A/S" value="<?php echo (isset($_POST['company_name'])) ? $_POST['company_name'] : $site['company_name']; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_vat" class="col-sm-2 control-label">Virksomheds cvr.</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="company_vat" id="company_vat" placeholder="87654321" value="<?php echo (isset($_POST['company_vat'])) ? $_POST['company_vat'] : $site['company_vat']; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_logo_url" class="col-sm-2 control-label">Logo URL</label>
+							<div class="col-sm-10">
+								<input type="url" class="form-control" name="company_logo_url" id="company_logo_url" placeholder="http://" value="<?php echo (isset($_POST['company_logo_url'])) ? $_POST['company_logo_url'] : $site['company_logo_url']; ?>">
 							</div>
 						</div>
 						<div class="form-group">
@@ -145,7 +197,7 @@ require '../templates/admin/header.php';
 						</div>
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
-								<?php echo message('Hvis du efterlader et felt tomt, vil det blive ignoreret.', 'info', false); ?>
+								<?php echo message('Hvis du efterlader et felt tomt vil det blive ignoreret, og beholde sin gamle værdi.', 'info', false); ?>
 							</div>
 						</div>
 					</form>
@@ -173,7 +225,44 @@ require '../templates/admin/header.php';
 						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
 							<label for="consumer_secret" class="col-sm-2 control-label">consumer_secret</label>
 							<div class="col-sm-10">
-								<input required type="text" class="form-control" name="consumer_secret" id="role" placeholder="Bliver ikke vist igen, kun gemt!" value="<?php echo (isset($_POST['consumer_secret'])) ? $_POST['consumer_secret'] : ''; ?>">
+								<input required type="text" class="form-control" name="consumer_secret" id="consumer_secret" placeholder="Bliver ikke vist igen, kun gemt!" value="<?php echo (isset($_POST['consumer_secret'])) ? $_POST['consumer_secret'] : ''; ?>">
+							</div>
+						</div>
+						<hr class="separator">
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="address" class="col-sm-2 control-label">Adresse</label>
+							<div class="col-sm-10">
+								<input required type="text" class="form-control" name="address" id="address" placeholder="Testvej 1" value="<?php echo (isset($_POST['address'])) ? $_POST['address'] : ''; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="postcode" class="col-sm-2 control-label">Postnummer</label>
+							<div class="col-sm-10">
+								<input required type="text" class="form-control" name="postcode" id="postcode" placeholder="1234" value="<?php echo (isset($_POST['postcode'])) ? $_POST['postcode'] : ''; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="city" class="col-sm-2 control-label">By</label>
+							<div class="col-sm-10">
+								<input required type="text" class="form-control" name="city" id="city" placeholder="Testby" value="<?php echo (isset($_POST['city'])) ? $_POST['city'] : ''; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_name" class="col-sm-2 control-label">Virksomhedsnavn</label>
+							<div class="col-sm-10">
+								<input required type="text" class="form-control" name="company_name" id="company_name" placeholder="Test virksomhed A/S" value="<?php echo (isset($_POST['company_name'])) ? $_POST['company_name'] : ''; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_vat" class="col-sm-2 control-label">Virksomheds cvr.</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" name="company_vat" id="company_vat" placeholder="87654321" value="<?php echo (isset($_POST['company_vat'])) ? $_POST['company_vat'] : ''; ?>">
+							</div>
+						</div>
+						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
+							<label for="company_logo_url" class="col-sm-2 control-label">Logo URL</label>
+							<div class="col-sm-10">
+								<input type="url" class="form-control" name="company_logo_url" id="company_logo_url" placeholder="http://" value="<?php echo (isset($_POST['company_logo_url'])) ? $_POST['company_logo_url'] : ''; ?>">
 							</div>
 						</div>
 						<div class="form-group">

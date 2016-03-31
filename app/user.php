@@ -11,10 +11,11 @@ function login($email, $password){
 	$bcrypt = new Bcrypt(12);
 
 	//$hash = $bcrypt->hash($password);
-	$sth = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
-	$sth->bindParam(':email', $email);
-	$sth->execute();
-	$result = $sth->fetch(PDO::FETCH_ASSOC);
+	$result = get_user_by_email($email);
+	if (!$result) {
+		return false;
+	}
+	
 	$user_id = $result['id'];
 	$user_email = $result['email'];
 	$user_name = $result['name'];
@@ -27,6 +28,7 @@ function login($email, $password){
 		$sth_1 = $db->prepare("SELECT COUNT(*) FROM orders");
 		$sth_2 = $db->prepare("SELECT COUNT(*) FROM invoices");
 		$sth_3 = $db->prepare("SELECT COUNT(*) FROM sites");
+		$sth_4 = $db->prepare("SELECT COUNT(*) FROM users");
 
 		$result_1 = $sth_1->execute();
 		$orders_count = $sth_1->fetchColumn();
@@ -37,6 +39,9 @@ function login($email, $password){
 		$result_3 = $sth_3->execute();
 		$sites_count = $sth_3->fetchColumn();
 
+		$result_4 = $sth_4->execute();
+		$users_count = $sth_4->fetchColumn();
+
 		$_SESSION['loggedin'] = true;
 		$_SESSION['user_id'] = $user_id;
 		$_SESSION['user_email'] = $user_email;
@@ -46,6 +51,7 @@ function login($email, $password){
 		$_SESSION['orders_count'] = $orders_count;
 		$_SESSION['invoices_count'] = $invoices_count;
 		$_SESSION['sites_count'] = $sites_count;
+		$_SESSION['users_count'] = $users_count;
 		return true;
 	}
 
@@ -68,6 +74,7 @@ function logout(){
 	unset($_SESSION['orders_count']);
 	unset($_SESSION['invoices_count']);
 	unset($_SESSION['sites_count']);
+	unset($_SESSION['users_count']);
 	session_destroy();
 
 	header('Location: '.BASE_URL);
@@ -119,13 +126,15 @@ function add_user($name, $email, $role, $password, $confirm_password){
 	$result = $sth->execute();
 
 	if ($result) {
+		$_SESSION['users_count'] = $_SESSION['users_count'] + 1;
+
 		return true;
 	}
 
 	return message('Noget gik galt.', 'danger');
 }
 
-function change_user_details($email, $name){
+function change_user_details($user_id, $email, $name, $role){
 	global $db;
 	if (empty($email) || empty($name)) {
 		if (empty($email)) {
@@ -146,33 +155,50 @@ function change_user_details($email, $name){
 		$_SESSION['user_email_error'] = true;
 		return message('"E-mail" skal være en rigtigt e-mail.', 'danger');
 	} else if (get_user_by_email($email) && $email != $_SESSION['user_email']) {
-		$_SESSION['user_email_error'] = true;
-		return message('E-mail er allerede i brug.', 'danger');
+		if (isset($_POST['old_email'])) {
+			if ($_POST['old_email'] != $email) {
+				$_SESSION['user_email_error'] = true;
+				return message('E-mail er allerede i brug.', 'danger');
+			}
+		} else {
+			$_SESSION['user_email_error'] = true;
+			return message('E-mail er allerede i brug.', 'danger');
+		}
+	} else if ($role != 'viewer' && $role != 'accountant' && $role != 'admin' && $role != 'superadmin') {
+		$_SESSION['user_role_error'] = true;
+		return message('"Rolle" skal være en gyldig rolle.', 'danger');
+	} else if ($role != $_SESSION['user_role'] && !check_user_abilities_superadmin()) {
+		$_SESSION['user_role_error'] = true;
+		return message('Du har ikke det privilege!', 'danger');
 	}
 
-	//Not nessecary to update and make a db call.
-	if ($email == $_SESSION['user_email'] && $name == $_SESSION['user_name']) {
+	//Not nessecary to update and make a db call if data is the same
+	if ($user_id == $_SESSION['user_id'] && $email == $_SESSION['user_email'] && $name == $_SESSION['user_name'] && $role == $_SESSION['user_role']) {
 		return true;
 	}
 
-	$sth = $db->prepare("UPDATE users SET email = :email, name = :name WHERE id = :user_id AND email = :email");
+	$sth = $db->prepare("UPDATE users SET email = :email, name = :name, role = :role WHERE id = :user_id");
 	$sth->bindParam(':email', $email);
 	$sth->bindParam(':name', $name);
-	$sth->bindParam(':user_id', $_SESSION['user_id']);
+	$sth->bindParam(':role', $role);
+	$sth->bindParam(':user_id', $user_id);
 
 	$result = $sth->execute();
 
-	$_SESSION['user_name'] = $name;
-	$_SESSION['user_email'] = $email;
-
 	if ($result) {
+		if ($user_id == $_SESSION['user_id']) {
+			$_SESSION['user_name'] = $name;
+			$_SESSION['user_email'] = $email;
+			$_SESSION['user_role'] = $role;
+		}
+		
 		return true;
 	}
 
 	return message('Noget gik galt.', 'danger');
 }
 
-function change_user_password($password, $password_again){
+function change_user_password($user_id, $password, $password_again){
 	global $db;
 	if (empty($password) || empty($password_again)) {
 		$_SESSION['user_password_error'] = true;
@@ -192,10 +218,9 @@ function change_user_password($password, $password_again){
 
 	$password = $bcrypt->hash($password);
 
-	$sth = $db->prepare("UPDATE users SET password = :password WHERE id = :user_id AND email = :email");
+	$sth = $db->prepare("UPDATE users SET password = :password WHERE id = :user_id");
 	$sth->bindParam(':password', $password);
-	$sth->bindParam(':user_id', $_SESSION['user_id']);
-	$sth->bindParam(':email', $_SESSION['user_email']);
+	$sth->bindParam(':user_id', $user_id);
 
 	$result = $sth->execute();
 
@@ -224,6 +249,50 @@ function get_user_by_email($email){
 	}
 
 	return null;
+}
+
+function get_user_by_id($id){
+	global $db;
+	$sth = $db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
+	$sth->bindParam(':id', $id);
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function delete_user_by_id($id){
+	global $db;
+	$sth = $db->prepare("DELETE FROM users WHERE id = :user_id");
+	$sth->bindParam(':user_id', $id);
+
+	$result = $sth->execute();
+
+	if ($result) {
+		return true;
+	}
+
+	return false;
+}
+
+function get_users(){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM users");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	return $results;
 }
 
 class Bcrypt {

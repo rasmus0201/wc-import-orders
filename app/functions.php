@@ -6,6 +6,18 @@ if (!defined('BASE_URL')) {
 	exit;
 }
 
+function fullpageurl() {
+	//define('BASE_PATH', getcwd().'/');
+	//define('BASE_URL', fullpageurl());
+	$pageURL = 'http://';
+	if ($_SERVER["SERVER_PORT"] != "80") {
+		$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+	} else {
+		$pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+	}
+	return $pageURL;
+}
+
 function message($str, $type = 'success', $dismissable = true){
 
 	if ($dismissable) {
@@ -179,7 +191,7 @@ function change_settings($next_invoice, $last_pull_date, $base_url, $base_path){
 	return true;
 }
 
-function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs){
+function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs, $address, $postcode, $city, $company_name, $company_vat, $company_logo_url){
 	global $db;
 
 	if (empty($site_id)) {
@@ -189,22 +201,22 @@ function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs){
 	if(!strstr($new_url, 'http://') && !strstr($new_url, 'https://')){
 		$url = 'http://'.$new_url;
 	}
+	if(!strstr($company_logo_url, 'http://') && !strstr($company_logo_url, 'https://')){
+		$company_logo_url = 'http://'.$company_logo_url;
+	}
 
 	$new_url = rtrim($new_url, '/');
+	$company_logo_url = rtrim($company_logo_url, '/');
 
 	if ($old_url != $new_url) {
-		$sth = $db->prepare("SELECT id,name,url FROM sites WHERE url = :url LIMIT 1");
-		$sth->bindParam(':url', $new_url);
-		$sth->execute();
-
-		$site = $sth->fetch(PDO::FETCH_ASSOC);
+		$site = get_site_by_url($new_url);
 
 		if (!empty($site) && $site !== false) {
 			return message('En side med denne url eksisterer allerede. Du kan redigere den her: <a href="?site_id='.$site['id'].'&action=edit">'.$site['name'].'</a>.', 'danger');
 		}
 	}
 
-	if ( empty($name) && empty($new_url) && empty($ck) && empty($cs) ) {
+	if ( empty($name) && empty($new_url) && empty($ck) && empty($address) && empty($postcode) && empty($city) && empty($company_name) && empty($company_vat) && empty($company_logo_url) ) {
 		return true;
 	}
 	
@@ -220,6 +232,24 @@ function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs){
 	}
 	if (!empty($cs)) {
 		$sql .= 'consumer_secret = :cs, ';
+	}
+	if (!empty($address)) {
+		$sql .= 'address = :address, ';
+	}
+	if (!empty($postcode)) {
+		$sql .= 'postcode = :postcode, ';
+	}
+	if (!empty($city)) {
+		$sql .= 'city = :city, ';
+	}
+	if (!empty($company_name)) {
+		$sql .= 'company_name = :company_name, ';
+	}
+	if (!empty($company_vat)) {
+		$sql .= 'company_vat = :company_vat, ';
+	}
+	if (!empty($company_logo_url)) {
+		$sql .= 'company_logo_url = :company_logo_url, ';
 	}
 
 	$sql = rtrim($sql, ' ,');
@@ -241,6 +271,24 @@ function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs){
 	if (!empty($cs)) {
 		$sth->bindParam(':cs', $cs);
 	}
+	if (!empty($address)) {
+		$sth->bindParam(':address', $address);
+	}
+	if (!empty($postcode)) {
+		$sth->bindParam(':postcode', $postcode);
+	}
+	if (!empty($city)) {
+		$sth->bindParam(':city', $city);
+	}
+	if (!empty($company_name)) {
+		$sth->bindParam(':company_name', $company_name);
+	}
+	if (!empty($company_vat)) {
+		$sth->bindParam(':company_vat', $company_vat);
+	}
+	if (!empty($company_logo_url)) {
+		$sth->bindParam(':company_logo_url', $company_logo_url);
+	}
 
 	$result = $sth->execute();
 
@@ -251,12 +299,12 @@ function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs){
 	return message('Noget gik galt.', 'danger');
 }
 
-function add_site($name, $url, $ck, $cs){
+function add_site($name, $url, $ck, $cs, $address, $postcode, $city, $company_name, $company_vat, $company_logo_url){
 	global $db;
-	if ( empty($name) || empty($url) || empty($ck) || empty($cs) ) {
+	if ( empty($name) || empty($url) || empty($ck) || empty($cs) || empty($address) || empty($postcode) || empty($city) || empty($company_name) ) {
 		$_SESSION['form_error'] = true;
 		
-		return message('Alle felter skal udfyldes.', 'danger');
+		return message('Alle felter, undtagen logo url & cvr. nr., skal udfyldes.', 'danger');
 	}
 
 	if(!strstr($url, 'http://') && !strstr($url, 'https://')){
@@ -265,21 +313,24 @@ function add_site($name, $url, $ck, $cs){
 
 	$url = rtrim($url, '/');
 
-	$sth = $db->prepare("SELECT id,name,url FROM sites WHERE url = :url LIMIT 1");
-	$sth->bindParam(':url', $url);
-	$sth->execute();
-
-	$site = $sth->fetch(PDO::FETCH_ASSOC);
+	$site = get_site_by_url($url);
 
 	if (!empty($site) && $site !== false) {
-		return message('En side med denne url eksisterer allerede. Du kan redigere den her: <a href="?site_id='.$site['id'].'&action=edit">'.$site['name'].'</a>', 'danger');
+		return message('En side med denne url eksisterer allerede. Du kan redigere den her: <a class="alert-link" href="?site_id='.$site['id'].'&action=edit">'.$site['name'].'</a>', 'danger');
 	}
 
-	$sth = $db->prepare("INSERT IGNORE INTO sites SET name = :name, url = :url, consumer_key = :ck, consumer_secret = :cs");
+	$sth = $db->prepare("INSERT IGNORE INTO sites SET name = :name, url = :url, consumer_key = :ck, consumer_secret = :cs, address = :address, postcode = :postcode, city = :city, company_name = :company_name, company_vat = :company_vat, company_logo_url = :company_logo_url");
 	$sth->bindParam(':name', $name);
 	$sth->bindParam(':url', $url);
 	$sth->bindParam(':ck', $ck);
 	$sth->bindParam(':cs', $cs);
+
+	$sth->bindParam(':address', $address);
+	$sth->bindParam(':postcode', $postcode);
+	$sth->bindParam(':city', $city);
+	$sth->bindParam(':company_name', $company_name);
+	$sth->bindParam(':company_vat', $company_vat);
+	$sth->bindParam(':company_logo_url', $company_logo_url);
 
 	$result = $sth->execute();
 
@@ -289,6 +340,81 @@ function add_site($name, $url, $ck, $cs){
 	}
 
 	return message('Noget gik galt.', 'danger');
+}
+
+function get_sites(){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM sites");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	$sites = [];
+
+	foreach ($results as $result => $value) {
+		$sites[$value['id']] = $value;
+	}
+
+	return $sites;
+}
+
+function get_site_by_id($id){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM sites WHERE id = :site_id LIMIT 1");
+	$sth->bindParam(':site_id', $id);
+	$sth->execute();
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function get_site_by_url($url){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM sites WHERE url = :site_url LIMIT 1");
+	$sth->bindParam(':site_url', $url);
+	$sth->execute();
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function delete_site_by_id($id){
+	global $db;
+
+	$sth = $db->prepare("DELETE FROM sites WHERE id = :site_id");
+	$sth->bindParam(':site_id', $id);
+
+	$result = $sth->execute();
+
+	if ($result) {
+		return true;
+	}
+
+	return false;
 }
 
 function update_setting($key, $value){
@@ -315,22 +441,6 @@ function get_setting($setting){
 	return $res['setting_value'];
 }
 
-function get_sites(){
-	global $db;
-
-	$sth = $db->prepare("SELECT * FROM sites");
-	$sth->execute();
-	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
-
-	$sites = [];
-
-	foreach ($results as $result => $value) {
-		$sites[$value['id']] = $value;
-	}
-
-	return $sites;
-}
-
 function get_settings(){
 	global $db;
 
@@ -347,17 +457,95 @@ function get_settings(){
 	return $settings;
 }
 
-function get_users(){
+function get_order_by_id($id){
 	global $db;
 
-	$sth = $db->prepare("SELECT * FROM users");
+	$sth = $db->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
+	$sth->bindParam(':id', $id);
 	$sth->execute();
-	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-	return $results;
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
 }
 
-function download_csv_orders($orders){
+function get_order_by_invoice_id($id){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM orders WHERE invoice_id = :invoice_id LIMIT 1");
+	$sth->bindParam(':invoice_id', $id);
+	$sth->execute();
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function get_invoice_by_id($id){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM invoices WHERE id = :id LIMIT 1");
+	$sth->bindParam(':id', $id);
+	$sth->execute();
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function get_invoice_by_invoice_id($id){
+	global $db;
+
+	$sth = $db->prepare("SELECT * FROM invoices WHERE invoice_id = :invoice_id LIMIT 1");
+	$sth->bindParam(':invoice_id', $id);
+	$sth->execute();
+
+	$result = $sth->execute();
+
+	if ($result) {
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($result) {
+			return $result;
+		}
+
+		return false;
+	}
+
+	return null;
+}
+
+function download_csv_orders_by_ids($orders){
 	if (is_null($orders) || empty($orders) ) {
 		return false;
 	}
@@ -375,17 +563,19 @@ function download_csv_orders($orders){
 
 			$sth->execute();
 
-			$csv .= json_encode($sth->fetch(PDO::FETCH_ASSOC))."\s";
+			$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+			if ($result) {
+				$csv .= json_encode($result)."\s";
+			} else {
+				header('Location: '.BASE_URL.'/'.$global['current_url']);
+				exit;
+			}
 		}
 	}
 
-	if ( !$csv ) {
-		header('Location: '.BASE_URL.'/'.$global['current_url']);
-		exit;
-	}
-
 	header('Content-type: text/csv');
-	header('Content-disposition: attachment; filename=Export '.date('Y-m-d H:i:s').'.csv');
+	header('Content-disposition: attachment; filename=CSV Export '.date('Y-m-d H:i:s').'.csv');
 	header('Pragma: no-cache');
 	header('Expires: 0');
 
@@ -401,6 +591,48 @@ function download_csv_orders($orders){
 				echo $join."\n";
 			}
 		}
+	}
+
+	exit;
+}
+
+function download_pdf_orders_by_ids($orders){
+	if (is_null($orders) || empty($orders) ) {
+		return false;
+	}
+	global $db, $global;
+
+	$sql = "SELECT * FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+
+	$invoices = '';
+
+	foreach ($orders as $order => $value) {
+		if ($value == 'on') {
+			$invoice_id = explode('_', $order)[1];
+			$sth = $db->prepare($sql);
+			$sth->bindParam(':invoice_id', $invoice_id);
+
+			$sth->execute();
+
+			$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+			if ($result) {
+				$invoices['invoice_'.$invoice_id] = $result;
+			} else {
+				header('Location: '.BASE_URL.'/'.$global['current_url']);
+				exit;
+			}
+		}
+	}
+
+	header('Content-type: application/pdf');
+	header('Content-disposition: attachment; filename=PDF Export '.date('Y-m-d H:i:s').'.pdf');
+	header('Pragma: no-cache');
+	header('Expires: 0');
+
+	foreach ($invoices as $invoice => $value) {
+		pred($invoice);
+		pred($value);
 	}
 
 	exit;

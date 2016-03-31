@@ -1,6 +1,6 @@
 <?php
 
-require_once 'db.php';
+//require_once 'db.php';
 
 require_once 'functions.php';
 require_once 'user.php';
@@ -26,6 +26,9 @@ $titles = [
 	'admin/invoices.php' => 'Fakturaer',
 	'admin/sites.php' => 'WC shops',
 	'admin/users.php' => 'Brugere',
+	'admin/tools.php' => 'Værktøjer',
+	'admin/profit-estimate.php' => 'Avanceberegner',
+	'admin/label-maker.php' => 'Lav labels',
 	'admin/logout.php' => 'Log ud',
 ];
 

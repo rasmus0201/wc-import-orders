@@ -10,7 +10,8 @@ require_once 'head.php';
 if ( ($global['current_url'] == 'admin/index.php') || 
 	($global['current_url'] == 'admin/orders.php') || 
 	($global['current_url'] == 'admin/reports.php') || 
-	($global['current_url'] == 'admin/invoices.php')) {
+	($global['current_url'] == 'admin/invoices.php') || 
+	($global['current_url'] == 'admin/users.php')) {
 	$dashboard_active = 'active';
 } else {
 	$dashboard_active = '';
@@ -22,10 +23,16 @@ if ( ($global['current_url'] == 'admin/settings.php') || $global['current_url'] 
 	$settings_active = '';
 }
 
-if ($global['current_url'] == 'admin/profile.php' || $global['current_url'] == 'admin/users.php') {
+if ($global['current_url'] == 'admin/profile.php') {
 	$profile_active = 'active';
 } else {
 	$profile_active = '';
+}
+
+if ($global['current_url'] == 'admin/tools.php') {
+	$tools_active = 'active';
+} else {
+	$tools_active = '';
 }
 
 ?>
@@ -47,6 +54,7 @@ if ($global['current_url'] == 'admin/profile.php' || $global['current_url'] == '
 				<li class="<?php echo $dashboard_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/"><?php echo $titles['admin/index.php']; ?></a></li>
 				<?php if(check_user_abilities_min_admin()): ?><li class="<?php echo $settings_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/settings.php"><?php echo $titles['admin/settings.php']; ?></a></li><?php endif; ?>
 				<li class="<?php echo $profile_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
+				<li class="<?php echo $tools_active; ?>"><a href="<?php echo BASE_URL; ?>/admin/tools.php"><?php echo $titles['admin/tools.php']; ?></a></li>
 				<li class="<?php echo ($global['current_url'] == 'admin/logout.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/logout.php"><?php echo $titles['admin/logout.php']; ?></a></li>
 			</ul>
 		</div>

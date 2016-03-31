@@ -159,21 +159,61 @@ function add_orders(array $orders){
 		$fee_lines = json_encode($value['fee_lines']);
 		$coupon_lines = json_encode($value['coupon_lines']);
 
-		$fee = 0;
+		$fee = '';
+		$shipping_total = '';
+		$subtotal = '';
+		$total = '';
 
-		if (!empty($value['fee_lines'])) {
-			$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
+		$fee_difference = 0;
+		$shipping_difference = 0;
+		$subtotal_difference = 0;
+		$total_difference = 0;
+
+		/*
+		Not using this, becuase data is not sufficient and accurate!
+		if (!empty($value['fee_lines']) && $value['fee_lines'] != '') {
+			foreach ($value['fee_lines'] as $line) {
+				$fee = (float)$fee+$line['total'];
+				$fee = (float)$fee+$line['total_tax'];
+			}
 		}
 
-		$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
-		$cart_discount = (float)$value['total_discount'];
-		$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
+		if (!empty($value['shipping_lines']) && $value['shipping_lines'] != '') {
+			foreach ($value['shipping_lines'] as $line) {
+				$shipping_total = (float)$shipping_total+$line['total'];
+				$shipping_total = (float)$shipping_total+$line['shipping_tax'];
+			}
+		}*/
+
+		if (isset($value['fee_lines'][0])) {
+			$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
+			$fee_difference = $fee;
+			$fee = number_format((double)$fee, 2, ',', '');
+		}
+
+		if ($value['total_shipping'] != 0) {
+			$shipping_total = (float)$value['total_shipping']+$value['shipping_tax'];
+			$shipping_difference = $shipping_total;
+			$shipping_total = number_format($shipping_total, 2, ',', '');
+		}
+
 		$id = $value['id'];
-		$total_no_format = (float)$value['total']-$cart_discount;
-		$subtotal = number_format(((float)$value['total'] - ($fee+$shipping_total+$cart_discount)), 2, ',', '');
-		$total = number_format($total_no_format, 2, ',', '');
-		$fee = number_format($fee, 2, ',', '');
-		$shipping_total = number_format($shipping_total, 2, ',', '');
+		$date = date("d-m-Y", strtotime(explode(' ', $value['created_at'])[0]));
+
+		$subtotal = ($value['subtotal']-$value['total_discount'])*1.25;
+		$total = $value['total'];
+
+		$subtotal_difference = $subtotal;
+		$total_difference = $total;
+
+		$difference = round($total_difference - ($subtotal_difference + $shipping_difference + $fee_difference), 2, PHP_ROUND_HALF_UP);
+
+		if ($subtotal != 0 && $difference != 0 && $difference != -0 && $difference != '0' && $difference != '-0') {
+			$subtotal = $subtotal + $difference;
+		}
+	
+		$subtotal = number_format($subtotal, 2, ',', '');
+		$total = number_format($total, 2, ',', '');
 
 		$subtotal_csv = $date.';-'.$invoice_id.';0;"1010";"";"'.$value['owner_site_name'].' (ID: '.$id.')";'.$subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
 		$shipping_csv = $date.';-'.$invoice_id.';0;"1040";"";"'.$value['owner_site_name'].' (ID: '.$id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
@@ -186,11 +226,8 @@ function add_orders(array $orders){
 		if (empty($shipping_total)) {
 			$shipping_csv = '';
 		}
-		if (empty($fee) || $fee == 0) {
+		if (empty($fee)) {
 			$fee_csv = '';
-		}
-		if (empty($total)) {
-			$total_csv = '';
 		}
 
 		$export_csv = [

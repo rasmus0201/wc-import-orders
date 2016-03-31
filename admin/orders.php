@@ -22,6 +22,9 @@ if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 		if ( explode('|', json_encode($orders))[0] == 'false' ) {
 			$message = explode('|', $orders)[1];
 			$form_error = true;
+		} else {
+			unset($_POST);
+			$message = message('Alle ordre importeret succesfuldt. I alt importeret: '.count($orders));
 		}
 	} else if ( explode('|', $orders)[0] == 'false' ) {
 		$message = explode('|', $orders)[1];
@@ -95,8 +98,10 @@ if (isset($_GET['action'])){
 				} else if ($_GET['action'] == 'export_csv') {
 					$action = 'view';
 					$is_action = true;
-					$message = message('.csv eksport-funktionen kommer snart!', 'danger');	
+
 					//Generate csv + download and then header to current order
+					$invoice = array('invoice_'.$invoice_id => 'on');
+					download_csv_orders_by_ids($invoice);
 				} else if ($_GET['action'] == 'export_pdf') {
 					$action = 'view';
 					$is_action = true;
@@ -126,7 +131,7 @@ require '../templates/admin/header.php';
 			<?php if($is_action === true): ?>
 				<?php if($action == 'pull'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Importér</h1>
-					<form class="form-horizontal" method="post">
+					<form class="form-horizontal" method="post" id="pull_orders_form">
 						<div class="form-group <?php echo (isset($form_error)) ? 'has-error' : '' ;?>">
 							<label for="limit" class="col-sm-2 control-label">Max. ordre antal pr. side.</label>
 							<div class="col-sm-10">
@@ -292,6 +297,7 @@ require '../templates/admin/header.php';
 											</tr>
 										<?php endforeach; ?>
 									<?php endif; ?>
+									<?php $fee = 0; ?>
 									<?php if(!empty($order['fee_lines']) && $order['fee_lines'] != ''): ?>
 										<?php foreach($order['fee_lines'] as $line): ?>
 											<tr>
@@ -301,6 +307,7 @@ require '../templates/admin/header.php';
 												<td></td>
 												<td><?php echo number_format($line['total_tax'], 2, ',', '.'); ?></td>
 												<td><?php echo number_format($line['total'], 2, ',', '.'); ?></td>
+												<?php $fee = $fee + $line['total'] + $line['total_tax']; ?>
 											</tr>
 										<?php endforeach; ?>
 									<?php endif; ?>
@@ -308,7 +315,18 @@ require '../templates/admin/header.php';
 										<td>I alt</td>
 										<td></td>
 										<td></td>
-										<td><?php echo number_format($order['subtotal']-$order['total_discount'], 2, ',', '.'); ?></td>
+										<?php
+
+											$subtotal = $order['subtotal']-$order['total_discount'];
+
+											$difference = round($order['total'] - ($subtotal + $order['total_shipping'] + $fee + $order['total_tax']), 2, PHP_ROUND_HALF_UP);
+
+											if ($subtotal != 0 && $difference != 0 && $difference != -0 && $difference != '0' && $difference != '-0') {
+												$subtotal = $subtotal + $difference;
+											}
+
+										?>
+										<td><?php echo number_format($subtotal, 2, ',', '.'); ?></td>
 										<td><?php echo number_format($order['total_tax'], 2, ',', '.'); ?></td>
 										<td><?php echo number_format($order['total'], 2, ',', '.'); ?></td>
 									</tr>
@@ -408,6 +426,10 @@ require '../templates/admin/header.php';
 								</table>
 							</div>
 						</div>
+						<?php /* We have taken care of this difference!
+						<div class="col-sm-12">
+							<?php echo message('Ordreren kan have en difference på 1 øre, grundet afrunding. Dette er dog udlignet i eksport-funktionerne.', 'info', false); ?>
+						</div> */ ?>
 					</div>
 					<?php #echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>
 				<?php elseif($action == 'edit'): ?>

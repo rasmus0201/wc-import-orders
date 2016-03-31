@@ -8,11 +8,24 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	header('Location: '.BASE_URL);
 	exit;
 }
-if (isset($_POST['export_csv']) && check_user_abilities_min_accountant() ) {
-	download_csv_orders($_POST['invoices']);
-} else {
-	$invoices = get_invoices();
+if ((isset($_POST['export_csv']) || isset($_POST['export_pdf'])) && check_user_abilities_min_accountant() ) {
+	if (!empty($_POST['invoices']) && !is_null($_POST['invoices']) && $_POST['invoices'] != '') {
+		if (isset($_POST['export_csv'])) {
+			download_csv_orders_by_ids($_POST['invoices']);
+			echo 'heee';
+		} else if (isset($_POST['export_pdf'])) {
+			//download_pdf_orders_by_ids($_POST['invoices']);
+			$message = message('.pdf eksport-funktionen kommer snart!', 'danger');
+		} else {
+			$message = message('Noget gik galt.', 'danger');
+		}
+	} else {
+		$message = message('Du skal vælge mindst 1 faktura.', 'danger');
+	}
 }
+
+$invoices = get_invoices();
+
 
 require '../templates/admin/header.php';
 
@@ -21,6 +34,7 @@ require '../templates/admin/header.php';
 <div class="row">
 	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+		<?php echo $message; ?>
 		<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?><?php if(check_user_abilities_min_admin()): ?><span class="pull-right"><a class="btn btn-success" href="orders.php?action=add" role="button">Tilføj ordre</a><a class="btn btn-success" href="orders.php?action=pull" role="button">Importér ordrer</a></span><?php endif; ?></h1>
 		<?php if(!empty($invoices)): ?>
 			<?php if(check_user_abilities_min_accountant()): ?>

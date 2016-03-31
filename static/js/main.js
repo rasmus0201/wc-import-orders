@@ -1,4 +1,4 @@
-$(document).ready(function() { 
+$(document).ready(function() {
 	//$("#myTable").tablesorter().tablesorterPager({container: $("#pager")});
 	$('#select_all').change(function() {
 		var checkboxes = $(this).closest('form').find(':checkbox');
@@ -8,6 +8,13 @@ $(document).ready(function() {
 			checkboxes.prop('checked', false);
 		}
 	});
+
+	var submit = false;
+
+	$('#pull_orders_form').submit(function () {
+        if (submit) { return false; }
+        else { submit = true;}
+    });
 });
 
 //https://datatables.net/examples/styling/bootstrap.html
