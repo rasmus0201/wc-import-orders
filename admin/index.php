@@ -20,26 +20,13 @@ require '../templates/admin/header.php';
 	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<h1 class="page-header"><?php echo $global['site_title']; ?></h1>
-		<div class="row placeholders">
-			<div class="col-xs-6 col-sm-3 placeholder">
-				<img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-				<h4>Label</h4>
-				<span class="text-muted">Something else</span>
-				</div>
-				<div class="col-xs-6 col-sm-3 placeholder">
-				<img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-				<h4>Label</h4>
-				<span class="text-muted">Something else</span>
-				</div>
-				<div class="col-xs-6 col-sm-3 placeholder">
-				<img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-				<h4>Label</h4>
-				<span class="text-muted">Something else</span>
-				</div>
-				<div class="col-xs-6 col-sm-3 placeholder">
-				<img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-				<h4>Label</h4>
-				<span class="text-muted">Something else</span>
+
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<p>Her kan du administrere de fleste ting som foregår i virksomheden Ulvemosens Handelsselskab ApS.</p>
+				<p>Du har mulighed for export af ordre både til regnsskabsprogram "C5" (csv) eller som pdf-faktura.</p>
+				<p>Der er desuden flere muligheder og værktøjer som kan tages i brug.</p>
+				<p>Brug navigationen til at finde rundt.</p>
 			</div>
 		</div>
 	</div>

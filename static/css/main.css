@@ -11,6 +11,8 @@ body.loggedin .navbar-fixed-top {
 	border: 0;
 }
 
+textarea{ resize: vertical; }
+
 /*
  * Sidebar
  */
@@ -84,6 +86,10 @@ body.loggedin.admin-orders .page-header .btn:last-of-type{
 	text-transform: capitalize;
 }
 
+#export_btns{
+	margin-bottom: 20px;
+}
+
 body.loggedin .footer{
 	position: fixed;
 	bottom: 0;
@@ -99,6 +105,7 @@ body.loggedin .footer{
 	width: 100%;
 	padding: 25px 0;
 	height: 60px;
+	z-index: 9999;
 	background-color: #f5f5f5;
 }
 

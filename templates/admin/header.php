@@ -29,7 +29,7 @@ if ($global['current_url'] == 'admin/profile.php') {
 	$profile_active = '';
 }
 
-if ($global['current_url'] == 'admin/tools.php') {
+if ( ($global['current_url'] == 'admin/tools.php') || ($global['current_url'] == 'admin/label-maker.php') || ($global['current_url'] == 'admin/profit-estimate.php')  ) {
 	$tools_active = 'active';
 } else {
 	$tools_active = '';

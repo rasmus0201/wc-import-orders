@@ -39,11 +39,13 @@ require '../templates/admin/header.php';
 		<?php if(!empty($invoices)): ?>
 			<?php if(check_user_abilities_min_accountant()): ?>
 			<form class="form-horizontal" method="post">
-				<input class="btn btn-default" type="submit" name="export_csv" value="Eksportér CSV">
-				<input class="btn btn-default" type="submit" name="export_pdf" value="Eksportér PDF">
+				<div class="btn-group" role="group" id="export_btns">
+					<input class="btn btn-default" type="submit" name="export_csv" value="Eksportér CSV">
+					<input class="btn btn-default" type="submit" name="export_pdf" value="Eksportér PDF">
+				</div>
 			<?php endif; ?>
 				<div class="table-responsive">
-					<table class="table table-striped">
+					<table id="invoice_table" class="table table-striped">
 						<thead>
 							<tr>
 								<?php if(check_user_abilities_min_accountant()): ?><th><div class="checkbox"><label><input type="checkbox" id="select_all"></label></div></th><?php endif; ?>

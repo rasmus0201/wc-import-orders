@@ -446,7 +446,7 @@ require '../templates/admin/header.php';
 			<?php if(!empty($orders)): ?>
 				<form class="form-horizontal" method="post">
 					<div class="table-responsive">
-						<table class="table table-striped">
+						<table id="orders_table" class="table table-striped">
 							<thead>
 								<tr>
 									<th>Faktura nr.</th>

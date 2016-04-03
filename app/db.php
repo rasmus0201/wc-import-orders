@@ -42,9 +42,8 @@ $message = '';
 	#See vat, subtotal, total, shipping, shipping vat, fees, sold products (+amounts etc.)
 	#Also see dates and other info.
 
-#Sort orders/invoices/users table by date/order_id/site/total-order-price/name/invoice_id and id/name/email/role
 #Make pdf template
-#Export (both .csv and .pdf)
+#Export (both .csv and .pdf) && Export bulk in .pdf
 	#from_date - to_date
 	#invoice_xx to invoice_yy
 #Edit orders
@@ -56,6 +55,7 @@ $message = '';
 
 # Lines now = 4963
 # Lines now = 5427
+# Lines now = 6181
 
 # Terminal = find . -name '*.php' | xargs wc -l
 
