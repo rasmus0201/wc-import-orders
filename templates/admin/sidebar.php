@@ -24,11 +24,11 @@ if (!defined('BASE_URL')) {
 		</ul>
 	<?php endif; ?>
 	<ul class="nav nav-sidebar">
-		<li class="<?php echo ($global['current_url'] == 'admin/profile.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
 		<li class="<?php echo ($global['current_url'] == 'admin/tools.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/tools.php"><?php echo $titles['admin/tools.php']; ?></a></li>
 		<li class="<?php echo ($global['current_url'] == 'admin/profit-estimate.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/profit-estimate.php">- <?php echo $titles['admin/profit-estimate.php']; ?></a></li>
 		<li class="<?php echo ($global['current_url'] == 'admin/label-maker.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/label-maker.php">- <?php echo $titles['admin/label-maker.php']; ?></a></li>
+	</ul>
+	<ul class="nav nav-sidebar">
+		<li class="<?php echo ($global['current_url'] == 'admin/profile.php') ? 'active' : ''; ?>"><a href="<?php echo BASE_URL; ?>/admin/profile.php"><?php echo $titles['admin/profile.php']; ?></a></li>
 	</ul>
 </div>

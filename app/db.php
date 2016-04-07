@@ -4,6 +4,8 @@ ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 mb_internal_encoding("UTF-8");
 
+date_default_timezone_set("Europe/Copenhagen");
+
 session_start();
 
 try {
@@ -34,28 +36,24 @@ define('STATIC_URL', BASE_URL.'/static');
 
 $message = '';
 
-
 //$_SESSION['invoices_count'] = 0;
 //$_SESSION['orders_count'] = 0;
 
-#Make some reports (daily, weekly, monthly, yearly, custom)
-	#See vat, subtotal, total, shipping, shipping vat, fees, sold products (+amounts etc.)
-	#Also see dates and other info.
-
 #Make pdf template
-#Export (both .csv and .pdf) && Export bulk in .pdf
-	#from_date - to_date
-	#invoice_xx to invoice_yy
-#Edit orders
+#Export .pdf in both bulk and by checkbox
+
+#Edit orders directly
 #Add orders directly
 
 # Lines of code wc api = 2539
-# Lines of code by Rasmus = 1962
-# Lines of code total = 4501
+# Lines of code by Rasmus = 1962 + 654
+# Lines of code total = 4501 + 654
 
-# Lines now = 4963
-# Lines now = 5427
-# Lines now = 6181
+# Lines now = 4963 + 654
+# Lines now = 5427 + 654
+# Lines now = 6181 + 654
+# Lines now = 6579 + 654
+# Lines now = 7259 + 654
 
 # Terminal = find . -name '*.php' | xargs wc -l
 

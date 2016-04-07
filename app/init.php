@@ -14,7 +14,7 @@ if (!defined('BASE_URL')) {
 
 $current_url = str_replace(BASE_PATH.'/','',$_SERVER["SCRIPT_FILENAME"]);
 $global['current_url'] = $current_url;
-$global['project_name'] = 'ULVEMOSENS HANDELSSELSKAB / Administrationsside';
+$global['project_name'] = 'Administration';
 
 $titles = [
 	'index.php' => $global['project_name'],

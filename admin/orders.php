@@ -342,6 +342,16 @@ require '../templates/admin/header.php';
 											</tr>
 										<?php endforeach; ?>
 									<?php endif; ?>
+									<?php if(!empty($order['total_discount']) && $order['total_discount'] != ''): ?>
+										<tr>
+											<td>Rabat i alt (er fratrukket)</td>
+											<td></td>
+											<td></td>
+											<td></td>
+											<td></td>
+											<td>-<?php echo number_format($order['total_discount'], 2, ',', '.'); ?></td>
+										</tr>
+									<?php endif; ?>
 								</table>
 							</div>
 						</div>

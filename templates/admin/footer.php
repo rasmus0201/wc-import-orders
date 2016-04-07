@@ -19,6 +19,10 @@ if (!defined('BASE_URL')) {
 	<script src="<?php echo STATIC_URL; ?>/js/jquery.min.js"></script>
 	<script src="<?php echo STATIC_URL; ?>/js/bootstrap.min.js"></script>
 
+	<?php if ($global['current_url'] == 'admin/reports.php') : ?>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+	<?php endif; ?>
+
 	<script src="<?php echo STATIC_URL; ?>/js/jquery.dataTables.min.js"></script>
 	<script src="<?php echo STATIC_URL; ?>/js/dataTables.bootstrap.min.js"></script>
 	
@@ -28,5 +32,9 @@ if (!defined('BASE_URL')) {
 	<script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
 	<script src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js"></script> */ ?>
 	<script src="<?php echo STATIC_URL;?>/js/main.js"></script>
+	<?php if ($global['current_url'] == 'admin/reports.php') : ?>
+		<script src="<?php echo STATIC_URL;?>/js/reports.js"></script>
+	<?php endif; ?>
+	
 	</body>
 </html>

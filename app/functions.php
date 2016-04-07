@@ -545,31 +545,53 @@ function get_invoice_by_invoice_id($id){
 	return null;
 }
 
-function download_csv_orders_by_ids($orders){
+function download_csv_orders_by_ids($orders, $export_bulk = false){
 	if (is_null($orders) || empty($orders) ) {
 		return false;
 	}
 	global $db, $global;
 
-	$sql = "SELECT export_csv FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
-
 	$csv = '';
 
-	foreach ($orders as $order => $value) {
-		if ($value == 'on') {
-			$invoice_id = explode('_', $order)[1];
-			$sth = $db->prepare($sql);
-			$sth->bindParam(':invoice_id', $invoice_id);
+	if ($export_bulk) {
+		$sql = "SELECT export_csv FROM orders WHERE invoice_id >= :min_id AND invoice_id <= :max_id";
+		$min_id = explode('-', $orders)[0];
+		$max_id = explode('-', $orders)[1];
 
-			$sth->execute();
+		$sth = $db->prepare($sql);
+		$sth->bindParam(':min_id', $min_id);
+		$sth->bindParam(':max_id', $max_id);
+		$sth->execute();
 
-			$result = $sth->fetch(PDO::FETCH_ASSOC);
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-			if ($result) {
-				$csv .= json_encode($result)."\s";
+		foreach ($result as $order => $value) {
+			if (!is_null($order)) {
+				$csv .= json_encode($value)."\s";
 			} else {
 				header('Location: '.BASE_URL.'/'.$global['current_url']);
 				exit;
+			}
+		}
+	} else {
+		$sql = "SELECT export_csv FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+
+		foreach ($orders as $order => $value) {
+			if ($value == 'on') {
+				$invoice_id = explode('_', $order)[1];
+				$sth = $db->prepare($sql);
+				$sth->bindParam(':invoice_id', $invoice_id);
+
+				$sth->execute();
+
+				$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+				if ($result) {
+					$csv .= json_encode($result)."\s";
+				} else {
+					header('Location: '.BASE_URL.'/'.$global['current_url']);
+					exit;
+				}
 			}
 		}
 	}
@@ -638,8 +660,350 @@ function download_pdf_orders_by_ids($orders){
 	exit;
 }
 
+
+function make_reports($min_date, $max_date, $sorting_method = 'day', $return_orders_count = false){
+	$orders = sort_orders($min_date, $max_date, $sorting_method);
+
+	$days_between = (int)ceil(abs(strtotime($max_date) - strtotime($min_date)) / 86400);
+	$months_between = (int)ceil(abs(strtotime($max_date) - strtotime($min_date)) / 2629743.83 );
+	$years_between = (int)ceil(abs(strtotime($max_date) - strtotime($min_date)) / 31556926 );
+
+	$sort_orders = array();
+
+	$count = 0;
+
+	foreach ($orders as $key => $order_arays) {
+		$sort_orders[$key]['total'] = 0;
+		$sort_orders[$key]['subtotal'] = 0;
+		$sort_orders[$key]['total_tax'] = 0;
+		$sort_orders[$key]['total_shipping'] = 0;
+		$sort_orders[$key]['shipping_tax'] = 0;
+		$sort_orders[$key]['total_discount'] = 0;
+		$sort_orders[$key]['fee'] = 0;
+
+		$count += count($order_arays);
+	}
+
+	if ($return_orders_count) {
+		return $count;
+	}
+
+	foreach ($orders as $key => $order_arays) {
+		foreach ($order_arays as $order => $value) {
+			$sort_orders[$key]['total'] += $value['total'];
+			$sort_orders[$key]['subtotal'] += $value['subtotal'];
+			$sort_orders[$key]['total_tax'] += $value['total_tax'];
+			$sort_orders[$key]['total_shipping'] += $value['total_shipping'];
+			$sort_orders[$key]['shipping_tax'] += $value['shipping_tax'];
+			$sort_orders[$key]['total_discount'] += $value['total_discount'];
+			if (isset($value['fee_lines'][0])) {
+				$sort_orders[$key]['fee'] += $value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
+			}
+		}
+	}
+
+	if ($sorting_method == 'day') {
+		$last = 'year_'.explode('-', $max_date)[0].'-'.'month_'.explode('-', $max_date)[1].'-'.'day_'.explode('-', $max_date)[2];
+		$first = 'year_'.explode('-', $min_date)[0].'-'.'month_'.explode('-', $min_date)[1].'-'.'day_'.explode('-', $min_date)[2];
+
+		if (count($sort_orders) < $days_between) {
+			$day = number_format(explode('_', explode('-', $first)[2])[1]);
+			$month = number_format(explode('_', explode('-', $first)[1])[1]);
+			$year = explode('_', explode('-', $first)[0])[1];
+
+			$last_day = number_format(explode('_', explode('-', $last)[2])[1]);
+			$last_month = number_format(explode('_', explode('-', $last)[1])[1]);
+			$last_year = explode('_', explode('-', $last)[0])[1];
+
+			$_month = $month;
+
+			for ($i=0; $i < $days_between; $i++) { 
+				$_day = $day + $i;
+
+				if ($_month == 1) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 2) {
+					# Check for leap years
+					if ($year % 4) {
+						if ($_day > 29) {
+							$_month = $month + 1;
+							$_day = ($_day % 29);
+						}
+					} else {
+						if ($_day > 28) {
+							$_month = $month + 1;
+							$_day = ($_day % 28);
+						}
+					}
+				} else if ($_month == 3) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 4) {
+					if ($_day > 30) {
+						$_month = $month + 1;
+						$_day = ($_day % 30);
+					}
+				} else if ($_month == 5) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 6) {
+					if ($_day > 30) {
+						$_month = $month + 1;
+						$_day = ($_day % 30);
+					}
+				} else if ($_month == 7) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 8) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 9) {
+					if ($_day > 30) {
+						$_month = $month + 1;
+						$_day = ($_day % 30);
+					}
+				} else if ($_month == 10) {
+					if ($_day > 31) {
+						$_month = $month + 1;
+						$_day = ($_day % 31);
+					}
+				} else if ($_month == 11) {
+					if ($_day > 30) {
+						$_month = $month + 1;
+						$_day = ($_day % 30);
+					}
+				} else if ($_month == 12) {
+					if ($_day > 31) {
+						$year = $year + 1;
+						$_month = 1;
+						$_day = ($_day % 31);
+					}
+				}
+
+				if ($_day < 10) {
+					$day_lz = '0'.$_day;
+				} else {
+					$day_lz = $_day;
+				}
+
+				if ($_month < 10) {
+					$month_lz = '0'.$_month;
+				} else {
+					$month_lz = $_month;
+				}
+
+				$key = 'year_'.$year.'-month_'.$month_lz.'-day_'.$day_lz;
+
+				if (!array_key_exists($key, $sort_orders)) {
+					$sort_orders[$key]['total'] = 0;
+					$sort_orders[$key]['subtotal'] = 0;
+					$sort_orders[$key]['total_tax'] = 0;
+					$sort_orders[$key]['total_shipping'] = 0;
+					$sort_orders[$key]['shipping_tax'] = 0;
+					$sort_orders[$key]['total_discount'] = 0;
+					$sort_orders[$key]['fee'] = 0;
+				}
+			}
+		}
+	} else if ($sorting_method == 'month') {
+		$last = 'year_'.explode('-', $max_date)[0].'-'.'month_'.explode('-', $max_date)[1];
+		$first = 'year_'.explode('-', $min_date)[0].'-'.'month_'.explode('-', $min_date)[1];
+
+		if (count($sort_orders) < $days_between) {
+			$month = number_format(explode('_', explode('-', $first)[1])[1]);
+			$year = explode('_', explode('-', $first)[0])[1];
+
+			$last_month = number_format(explode('_', explode('-', $last)[1])[1]);
+			$last_year = explode('_', explode('-', $last)[0])[1];
+
+			$_year = $year;
+
+			for ($i=0; $i < $months_between; $i++) { 
+				$_month = $month + $i;
+
+				if ($_month > 12) {
+					$_year = $year + 1;
+					$_month = $_month % 12;
+				}
+
+				if ($_month < 10) {
+					$month_lz = '0'.$_month;
+				} else {
+					$month_lz = $_month;
+				}
+
+				$key = 'year_'.$_year.'-month_'.$month_lz;
+
+				if (!array_key_exists($key, $sort_orders)) {
+					$sort_orders[$key]['total'] = 0;
+					$sort_orders[$key]['subtotal'] = 0;
+					$sort_orders[$key]['total_tax'] = 0;
+					$sort_orders[$key]['total_shipping'] = 0;
+					$sort_orders[$key]['shipping_tax'] = 0;
+					$sort_orders[$key]['total_discount'] = 0;
+					$sort_orders[$key]['fee'] = 0;
+				}
+			}
+		}
+	} else if ($sorting_method == 'year') {
+		$last = 'year_'.explode('-', $max_date)[0];
+		$first = 'year_'.explode('-', $min_date)[0];
+
+		if (count($sort_orders) < $days_between) {
+			$year = explode('_', explode('-', $first)[0])[1];
+			$last_year = explode('_', explode('-', $last)[0])[1];
+
+			for ($i=0; $i < $years_between; $i++) { 
+				$_year = $year + $i;
+
+				$key = 'year_'.$_year;
+
+				if (!array_key_exists($key, $sort_orders)) {
+					$sort_orders[$key]['total'] = 0;
+					$sort_orders[$key]['subtotal'] = 0;
+					$sort_orders[$key]['total_tax'] = 0;
+					$sort_orders[$key]['total_shipping'] = 0;
+					$sort_orders[$key]['shipping_tax'] = 0;
+					$sort_orders[$key]['total_discount'] = 0;
+					$sort_orders[$key]['fee'] = 0;
+				}
+			}
+		}
+	}
+ 	ksort($sort_orders);
+
+	return $sort_orders;
+}
+
+function find_label($reports, $sorting_method = 'day'){
+	$return = '';
+
+	if ($sorting_method == 'day') {
+		foreach($reports as $key => $data){
+			$return .= "'".explode("_", explode("-", $key)[2])[1]."/".explode("_", explode("-", $key)[1])[1]."-".explode("_", explode("-", $key)[0])[1]."'".',';
+		}
+	} else if ($sorting_method == 'month') {
+		foreach($reports as $key => $data){
+			$return .= "'".explode("_", explode("-", $key)[1])[1].'-'.explode("_", explode("-", $key)[0])[1]."'".',';
+		}
+	} else if ($sorting_method == 'year') {
+		foreach($reports as $key => $data){
+			$return .= "'".explode("_", explode("-", $key)[0])[1]."'".',';
+		}
+	} else if ($sorting_method == 'site') {
+		foreach($reports as $key => $data){
+			$site_id = explode("_", $key)[1];
+			$site = get_site_by_id($site_id);
+
+			$return .= "'".$site['name']."'".',';
+		}
+	}
+
+	return $return;
+}
+
+function sort_orders($min_date, $max_date, $sorting_method = 'day'){
+	global $db;
+
+	$sth = $db->prepare("SELECT order_id, owner_site_id, order_created_at, currency, total, subtotal, total_tax, total_shipping, shipping_tax, total_discount, fee_lines FROM orders WHERE order_created_at >= :min_date AND order_created_at < :max_date");
+	$sth->bindParam(':min_date', $min_date);
+	$sth->bindParam(':max_date', $max_date);
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	$results = json_decode(json_encode($results), 1);
+
+	$orders_by_day = array();
+	$orders_by_month = array();
+	$orders_by_year = array();
+
+	foreach ($results as $order => $value) {
+		$value['fee_lines'] = json_decode($value['fee_lines'], 1);
+
+		$results[$value['order_id'].'_'.$value['owner_site_id']] = $value;
+		$results[$order] = [];
+		unset($results[$order]);
+	}
+
+	if ($sorting_method == 'day') {
+		return sort_orders_by_day($results);
+	} elseif ($sorting_method == 'month') {
+		return sort_orders_by_month($results);
+	} elseif ($sorting_method == 'year') {
+		return sort_orders_by_year($results);
+	} elseif ($sorting_method == 'site') {
+		return sort_orders_by_site($results);
+	} else {
+		return $results;
+	}
+}
+
+function sort_orders_by_site($orders){
+	$orders_by_site = array();
+
+	foreach ($orders as $order => $value) {
+		$orders_by_site['site_'.$value['owner_site_id']]['order_'.$value['order_id']] = $value;
+	}
+
+	return $orders_by_site;
+}
+
+function sort_orders_by_day($orders){
+	$orders_by_day = array();
+
+	foreach ($orders as $order => $value) {
+		$ymd = explode('-', explode(' ', $value['order_created_at'])[0]);
+		$orders_by_day['year_'.$ymd[0].'-month_'.$ymd[1].'-day_'.$ymd[2]]['site_'.$value['owner_site_id'].'-order_'.$value['order_id']] = $value;
+	}
+
+	return $orders_by_day;
+}
+
+function sort_orders_by_month($orders){
+	$orders_by_month = array();
+
+	foreach ($orders as $order => $value) {
+		$ymd = explode('-', explode(' ', $value['order_created_at'])[0]);
+		$orders_by_month['year_'.$ymd[0].'-month_'.$ymd[1]]['site_'.$value['owner_site_id'].'-order_'.$value['order_id']] = $value;
+	}
+
+	return $orders_by_month;
+}
+
+function sort_orders_by_year($orders){
+	$orders_by_year = array();
+
+	foreach ($orders as $order => $value) {
+		$ymd = explode('-', explode(' ', $value['order_created_at'])[0]);
+		$orders_by_year['year_'.$ymd[0]]['site_'.$value['owner_site_id'].'-order_'.$value['order_id']] = $value;
+	}
+
+	return $orders_by_year;
+}
+
 function array_assoc_reverse(array $arr){
 	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
+}
+
+function closestDate($day){
+	$day = ucfirst($day);
+	if(date('l', time()) == $day)
+		return date("Y-m-d", time());
+	else if(abs(time()-strtotime('next '.$day)) < abs(time()-strtotime('last '.$day)))
+		return date("Y-m-d", strtotime('next '.$day));
+	else
+		return date("Y-m-d", strtotime('last '.$day));
 }
 
 function pred($arr){

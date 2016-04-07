@@ -1,5 +1,4 @@
 $(document).ready(function() {
-	//$("#myTable").tablesorter().tablesorterPager({container: $("#pager")});
 	$('#select_all').change(function() {
 		var checkboxes = $(this).closest('form').find(':checkbox');
 		if($(this).is(':checked')) {
@@ -47,7 +46,7 @@ $(document).ready(function() {
 			'orderable': false,
 			'targets': 4
 		}],
-		'order': [[ 1, 'asc' ]]
+		'order': [[ 0, 'desc' ]]
 	});
 	
 	$('#invoice_table').DataTable({
@@ -72,7 +71,7 @@ $(document).ready(function() {
 			'orderable': false,
 			'targets': [0,3]
 		}],
-		'order': [[ 1, 'asc' ]]
+		'order': [[ 1, 'desc' ]]
 	});
 });
 
@@ -133,6 +132,3 @@ function calculate_currency(from, amount){
 	}
 }
 
-//https://datatables.net/examples/styling/bootstrap.html
-//https://github.com/drvic10k/bootstrap-sortable
-//http://issues.wenzhixin.net.cn/bootstrap-table/index.html

@@ -11,7 +11,7 @@ if (isset($_POST['make_label'])) {
 
 	if (isset($_POST['save_as_html'])) {
 		header('Content-type: application/pdf');
-		header('Content-disposition: attachment; filename=Ingrediens label - '.$_POST['name'].'.html');
+		header('Content-disposition: attachment; filename='.$_POST['name'].' - Ingrediens label.html');
 		header('Pragma: no-cache');
 		header('Expires: 0');
 	}
@@ -21,7 +21,7 @@ if (isset($_POST['make_label'])) {
 	<html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<title> Labels </title>
+		<title><?php echo $_POST['name'].' - Ingrediens label'; ?></title>
 		<style>
 			@page { size: auto;  margin: 0mm; max-height: 297mm; page-break-after: auto; page-break-before: auto; }
 			@media print { html, body { height: auto; page-break-after: auto; page-break-before: auto; } #back{ display: none; } }
@@ -78,19 +78,68 @@ if (isset($_POST['make_label'])) {
 				top: 2px;
 				left: 10px;
 			}
+			<?php if($_POST['format'] == '3by8'): ?>
+				body{
+					margin-left: 0 !important;
+					margin-right: 0 !important;
+				}
+
+				.container {
+					width: 32%;
+				}
+
+				.container:nth-child(3){
+					margin-left: 5.9mm;
+					/*padding-left: 5mm;*/
+				}
+			<?php elseif($_POST['format'] == '3by7'): ?>
+				body{
+					margin-top: 10mm;
+					margin-left: 0;
+					margin-right: 0;
+					width: 210mm;
+				}
+				.container {
+					width: 62mm;
+				}
+				.container:nth-child(1){
+					margin-left: 7mm;
+				}
+				.container:nth-child(2){
+					margin-left: 3mm;
+					margin-right: 3mm;
+				}
+				.container:nth-child(3){
+					margin-right: 7mm;
+				}
+				.container:nth-child(3) .flex-container{
+					padding-left: 4mm;
+				}
+
+				.container .flex-container .flex-item:nth-child(1){
+					margin-bottom: 4mm;
+				}
+				.container .flex-container .flex-item:nth-child(2){
+					margin-bottom: 6mm;
+				}
+				.container .flex-container .flex-item:nth-child(3){
+					margin-bottom: 4mm;
+				}
+				.container .flex-container .flex-item:nth-child(4){
+					margin-bottom: 6mm;
+				}
+			<?php endif; ?>
 		</style>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 		<script>
 			$(document).ready(function(){
-				console.log($('body').innerHeight() > 1120);
-				console.log($('body').innerHeight());
-				if ($('body').innerHeight() > 1060 ) {
+				if ($('body').innerHeight() > 1100 ) {
 					$('.flex-item').css('font-size', '8px');
 
-					if ($('body').innerHeight() > 1060) {
+					if ($('body').innerHeight() > 1100) {
 						$('.flex-item').css('font-size', '7px');
 
-						if ($('body').innerHeight() > 1060) {
+						if ($('body').innerHeight() > 1100) {
 							$('.flex-item').css('font-size', '6px');
 						}
 					}
