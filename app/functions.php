@@ -18,7 +18,20 @@ function fullpageurl() {
 	return $pageURL;
 }
 
+function get_current_user_ip(){
+	if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+		$ip = $_SERVER['HTTP_CLIENT_IP'];
+	} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+		$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+	} else {
+		$ip = $_SERVER['REMOTE_ADDR'];
+	}
+
+	return $ip;
+}
+
 function message($str, $type = 'success', $dismissable = true){
+	$return = '';
 
 	if ($dismissable) {
 		switch ($type) {
@@ -457,6 +470,263 @@ function get_settings(){
 	return $settings;
 }
 
+function add_order($products, $shippings, $fees, $discounts, $billing_details, $shipping_details, $currency, $status, $order_created_at, $order_updated_at, $order_completed_at, $payment_method, $is_paid, $note/*, $total_line_items, $subtotal, $total, $total_tax, $total_discount*/){
+	global $db, $db_settings;
+	$next_invoice = get_setting('next_invoice');
+	$internal_order_id = get_setting('next_internal_order_id');
+	$url = $db_settings['base_url'];
+	$site_name = 'Ulvemosen';
+	$site_id = 0;
+
+	$total = 0;
+	$subtotal = 0;
+	$total_tax = 0;
+	$total_shipping = 0;
+	$shipping_tax = 0;
+	$cart_tax = 0;
+	$total_discount = 0;
+	$fee = 0;
+	$fee_tax = 0;
+
+	$shipping_methods = '';
+	$line_items_subtotal = 0;
+	$total_line_items = 0;
+
+	foreach ($products as $key => $value) {
+		$value['id'] = 0;
+		$value['tax_class'] = 'DK';
+		$value['total'] = $value['total']*0.8;
+		$value['subtotal_tax'] = $value['subtotal']*1.25*0.2;
+		$value['price'] = $value['qty_price'];
+		$value['quantity'] = $value['qty'];
+		$value['product_id'] = 0;
+		$value['sku'] = '';
+		$value['meta'] = [];
+
+		$subtotal += $value['total'];
+		$cart_tax += $value['total_tax'];
+		$total_line_items += $value['quantity'];
+
+		unset($value['qty']);
+		unset($value['qty_price']);
+
+		$products[$key] = $value;
+	}
+
+	foreach ($shippings as $key => $value) {
+		$value['id'] = 0;
+		$value['method_id'] = 'delivery';
+		$value['method_title'] = $value['name'];
+		$value['total'] = $value['subtotal'];
+
+		$total_shipping += $value['subtotal'];
+		$shipping_tax += $value['total_tax'];
+		$shipping_methods .= $value['method_title'].', ';
+
+		unset($value['total_tax']);
+		unset($value['subtotal']);
+
+		$shippings[$key] = $value;
+	}
+
+	foreach ($fees as $key => $value) {
+		$value['id'] = 0;
+		$value['title'] = $value['name'];
+		$value['tax_class'] = 'DK';
+		$value['total'] = $value['subtotal'];
+		$value['total_tax'] = $value['total_tax'];
+
+		$fee += $value['total'];
+		$fee_tax += $value['total_tax'];
+
+		unset($value['subtotal']);
+
+		$fees[$key] = $value;
+	}
+
+	foreach ($discounts as $key => $value) {
+		$value['id'] = 0;
+		$value['code'] = $value['name'];
+
+		$total_discount += $value['amount'];
+
+		unset($value['name']);
+
+		$discounts[$key] = $value;
+	}
+
+	$payment_details = json_encode([
+		'method_id' => explode('_', $payment_method)[0],
+		'method_title' => explode('_', $payment_method)[1],
+		'paid' => ($is_paid == 'yes') ? true : false
+	]);
+
+	$cart_tax += $fee_tax;
+	$total_tax = $cart_tax + $shipping_tax - ($total_discount*1.25*0.2);
+	$total = $subtotal + $total_shipping + $fee + $total_tax - $total_discount;
+	$line_items_subtotal = $subtotal + $cart_tax - ($total_discount*1.25) - $fee_tax;
+
+	$tax_lines = json_encode([
+		0 => [
+			'id' => 0,
+			'rate_id' => 1,
+			'code' => 'DK-MOMS-1',
+			'title' => 'Moms',
+			'total' => $total_tax,
+			'compound' => false
+		]
+	]);
+
+	$shipping_total = (float)0;
+
+	if ($total_shipping != 0) {
+		$shipping_total = $total_shipping+$shipping_tax;
+		$shipping_total = number_format($shipping_total, 2, ',', '');
+	}
+
+	$date = date("d-m-Y", strtotime(explode(' ', $order_completed_at)[0]));
+
+	$_subtotal = number_format($line_items_subtotal, 2, ',', '');
+	$_total = number_format($total, 2, ',', '');
+	$_fee = number_format($fee+$fee_tax, 2, ',', '');
+
+	$subtotal_csv = $date.';-'.$next_invoice.';0;"1010";"";"'.$site_name.' (ID: '.$internal_order_id.')";'.$_subtotal.';"DKK";100,00;"Salg";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+	$shipping_csv = $date.';-'.$next_invoice.';0;"1040";"";"'.$site_name.' (ID: '.$internal_order_id.')";'.$shipping_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+	$fee_csv = $date.';-'.$next_invoice.';0;"1610";"";"'.$site_name.' (ID: '.$internal_order_id.')";'.$_fee.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+	$total_csv = $date.';-'.$next_invoice.';0;"16200";"";"'.$site_name.' (ID: '.$internal_order_id.')";-'.$_total.';"DKK";100,00;"";"";0;'.$date.';0,00;;"";"";0,00;0;"";0;"";"";"";"";"";0;0,00;"";"";"";"";"";0'."\n";
+
+	if (empty($subtotal) || $subtotal === 0) {
+		$subtotal_csv = '';
+	}
+	if (empty($total_shipping) || $total_shipping === 0) {
+		$shipping_csv = '';
+	}
+	if (empty($fee) || $fee === 0) {
+		$fee_csv = '';
+	}
+
+	$export_csv = [
+		'separated' => [
+			'subtotal'	=> $subtotal_csv,
+			'shipping'	=> $shipping_csv,
+			'fee'		=> $fee_csv,
+			'total'		=> $total_csv,
+		],
+		'joined' => $subtotal_csv.$shipping_csv.$fee_csv.$total_csv
+	];
+
+	$export_csv = json_encode($export_csv);
+	$line_items = json_encode($products);
+	$shipping_lines = json_encode($shippings);
+	$shipping_methods = json_encode(rtrim($shipping_methods, ', '));
+	$fee_lines = json_encode($fees);
+	$coupon_lines = json_encode($discounts);
+	$billing_address = json_encode($billing_details);
+	$shipping_address = json_encode($shipping_details);
+
+	//ready to save in db :DDDD
+	$customer_ip = get_current_user_ip();
+	$customer_id = $_SESSION['user_id'];
+	$view_order_url = BASE_URL.'/admin/orders.php?invoice_id='.$next_invoice.'&action=view';
+
+	/*$order = [
+		'id' => 'xx',
+		'invoice_id' => $next_invoice,
+		'owner_site_id' => $site_id,
+		'owner_site_url' => $url,
+		'owner_site_name' => $site_name,
+		'order_id' => $internal_order_id,
+		'order_created_at' => $order_created_at,
+		'order_updated_at' => $order_updated_at,
+		'order_completed_at' => $order_completed_at,
+		'status' => $status,
+		'currency' => $currency,
+		'total' => $total,
+		'subtotal' => $subtotal,
+		'total_tax' => $total_tax,
+		'total_shipping' => $total_shipping,
+		'shipping_tax' => $shipping_tax,
+		'cart_tax' => $cart_tax,
+		'total_discount' => $total_discount,
+		'shipping_methods' => $shipping_methods,
+		'payment_details' => $payment_details,
+		'billing_address' => $billing_details,
+		'shipping_address' => $shipping_details,
+		'total_line_items_quantity' => $total_line_items,
+		'note' => $note,
+		'customer_ip' => $customer_ip,
+		'customer_id' => $customer_id,
+		'view_order_url' => $view_order_url,
+		'line_items' => $line_items,
+		'shipping_lines' => $shipping_lines,
+		'tax_lines' => $tax_lines,
+		'fee_lines' => $fee_lines,
+		'coupon_lines' => $coupon_lines,
+		'export_csv' => $export_csv,
+	];*/
+
+	$sth = $db->prepare("INSERT INTO orders (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `order_created_at`, `order_updated_at`, `order_completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`, `updated_at`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name,  :order_id, :order_created_at, :order_updated_at, :order_completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv, NOW(), NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`");
+	$sth->bindParam(':invoice_id', $next_invoice);
+	$sth->bindParam(':owner_site_id', $site_id);
+	$sth->bindParam(':owner_site_url', $url);
+	$sth->bindParam(':owner_site_name', $site_name);
+	$sth->bindParam(':order_id', $internal_order_id);
+	$sth->bindParam(':order_created_at', $order_created_at);
+	$sth->bindParam(':order_updated_at', $order_updated_at);
+	$sth->bindParam(':order_completed_at', $order_completed_at);
+	$sth->bindParam(':status', $status);
+	$sth->bindParam(':currency', $currency);
+	$sth->bindParam(':total', $total);
+	$sth->bindParam(':subtotal', $subtotal);
+	$sth->bindParam(':total_tax', $total_tax);
+	$sth->bindParam(':total_shipping', $total_shipping);
+	$sth->bindParam(':shipping_tax', $shipping_tax);
+	$sth->bindParam(':cart_tax', $cart_tax);
+	$sth->bindParam(':total_discount', $total_discount);
+	$sth->bindParam(':shipping_methods', $shipping_methods);
+	$sth->bindParam(':payment_details', $payment_details);
+	$sth->bindParam(':billing_address', $billing_address);
+	$sth->bindParam(':shipping_address', $shipping_address);
+	$sth->bindParam(':total_line_items_quantity', $total_line_items);
+	$sth->bindParam(':note', $note);
+	$sth->bindParam(':customer_ip', $customer_ip);
+	$sth->bindParam(':customer_id', $customer_id);
+	$sth->bindParam(':view_order_url', $view_order_url);
+	$sth->bindParam(':line_items', $line_items);
+	$sth->bindParam(':shipping_lines', $shipping_lines);
+	$sth->bindParam(':tax_lines', $tax_lines);
+	$sth->bindParam(':fee_lines', $fee_lines);
+	$sth->bindParam(':coupon_lines', $coupon_lines);
+	$sth->bindParam(':export_csv', $export_csv);
+
+	$res = $sth->execute();
+
+	if ($res) {
+		$_SESSION['orders_count'] = $_SESSION['orders_count'] + 1;
+
+		$sth = $db->prepare("INSERT INTO invoices SET invoice_id = :invoice_id, owner_site_id = :owner_site_id, owner_site_url = :owner_site_url, owner_site_name = :owner_site_name, order_id = :order_id, created_at = NOW()");
+		$sth->bindParam(':invoice_id', $next_invoice);
+		$sth->bindParam(':owner_site_id', $site_id);
+		$sth->bindParam(':owner_site_url', $url);
+		$sth->bindParam(':owner_site_name', $site_name);
+		$sth->bindParam(':order_id', $internal_order_id);
+
+		$res = $sth->execute();
+
+		update_setting('next_internal_order_id', $internal_order_id+1);
+		update_setting('next_invoice', $next_invoice+1);
+
+		if ($res) {
+			$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
+			return true;
+		}
+
+		return false;
+	}
+
+	return false;
+}
+
 function get_order_by_id($id){
 	global $db;
 
@@ -659,7 +929,6 @@ function download_pdf_orders_by_ids($orders){
 
 	exit;
 }
-
 
 function make_reports($min_date, $max_date, $sorting_method = 'day', $return_orders_count = false){
 	$orders = sort_orders($min_date, $max_date, $sorting_method);

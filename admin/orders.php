@@ -33,6 +33,46 @@ if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 		unset($_POST);
 		$message = message('Alle ordre importeret succesfuldt. I alt importeret: '.count($orders));
 	}
+} else if (isset($_POST['add_order']) && check_user_abilities_min_admin()) {
+	$billing_details = [
+		'first_name' => $_POST['billing_firstname'],
+		'last_name' => $_POST['billing_lastname'],
+		'address_1' => $_POST['billing_address_1'],
+		'address_2' => $_POST['billing_address_2'],
+		'city' => $_POST['billing_city'],
+		'postcode' => $_POST['billing_postcode'],
+		'country' => $_POST['billing_country'],
+		'company' => $_POST['billing_company'],
+		'phone' => $_POST['billing_phone'],
+		'email' => $_POST['billing_email'],
+		'state' => NULL
+	];
+	$shipping_details = [
+		'first_name' => (empty($_POST['shipping_firstname'])) ? $_POST['billing_firstname'] : $_POST['shipping_firstname'],
+		'last_name' => (empty($_POST['shipping_lastname'])) ? $_POST['billing_lastname'] : $_POST['shipping_lastname'],
+		'address_1' => (empty($_POST['shipping_address_1'])) ? $_POST['billing_address_1'] : $_POST['shipping_address_1'],
+		'address_2' => (empty($_POST['shipping_address_2'])) ? $_POST['billing_address_2'] : $_POST['shipping_address_2'],
+		'city' => (empty($_POST['shipping_city'])) ? $_POST['billing_city'] : $_POST['shipping_city'],
+		'postcode' => (empty($_POST['shipping_postcode'])) ? $_POST['billing_postcode'] : $_POST['shipping_postcode'],
+		'country' => (empty($_POST['shipping_country'])) ? $_POST['billing_country'] : $_POST['shipping_country'],
+		'company' => (empty($_POST['shipping_company'])) ? $_POST['billing_company'] : $_POST['shipping_company'],
+		'state' => NULL
+	];
+
+	$product = (isset($_POST['product'])) ? $_POST['product'] : [] ;
+	$shipping = (isset($_POST['shipping'])) ? $_POST['shipping'] : [] ;
+	$fee = (isset($_POST['fee'])) ? $_POST['fee'] : [] ;
+	$discount = (isset($_POST['discount'])) ? $_POST['discount'] : [] ;
+	$total_discount = (isset($_POST['total_discount'])) ? $_POST['total_discount'] : 0 ;
+
+	$result = add_order($product, $shipping, $fee, $discount, $billing_details, $shipping_details, $_POST['currency'], $_POST['status'], $_POST['order_created_at'], $_POST['order_updated_at'], $_POST['order_completed_at'], $_POST['payment'], $_POST['is_paid'], $_POST['note']/*, $_POST['total_line_items'], $_POST['subtotal'], $_POST['total_price'], $_POST['total_tax'], $total_discount*/);
+
+	if ($result === true) {
+		header('Location: '.BASE_URL.'/admin/orders.php?invoice_id='.$_POST['invoice_id'].'&action=view');
+		exit;
+	} else {
+		//$message = message('Noget gik galt, prøv igen.', 'danger');
+	}
 }
 
 $is_action = false;
@@ -126,7 +166,18 @@ require '../templates/admin/header.php';
 <div class="row">
 	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-		<?php echo $message; ?>
+		<?php echo $message; /*pred($result); pred(get_order_by_invoice_id($_GET['invoice_id'])); */?>
+		<?php 
+		/*$r_orders = array_reverse($orders);
+		foreach ($r_orders as $order => $value) {
+			if (isset($value['fee_lines'][0])) {
+				if ($value['fee_lines'][0]['total_tax'] != '0.00') {
+					pred($value['invoice_id']);
+					pred($value['fee_lines']);
+				}
+			}
+		}*/
+		?>
 		<?php if($is_action): ?>
 			<?php if($is_action === true): ?>
 				<?php if($action == 'pull'): ?>
@@ -169,8 +220,276 @@ require '../templates/admin/header.php';
 						</div>
 					</form>
 				<?php elseif($action == 'add'): ?>
-					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Tilføj</h1>
-					<?php echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>
+					<?php
+						$next_invoice = get_setting('next_invoice');
+						$internal_order_id = get_setting('next_internal_order_id');
+						$url = $db_settings['base_url'];
+					?>
+					<form method="post" class="form-horizontal">
+						<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Tilføj<span class="pull-right"><input class="btn btn-primary" type="submit" name="add_order" value="Tilføj ordre"></span></h1>
+						<div class="row">
+							<div class="col-sm-12"><h3>Ordredetaljer</h3></div>
+							<div class="col-sm-6">
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tr>
+											<td><label for="invoice_id">Faktura nr.</label></td>
+											<td><input readonly type="number" id="invoice_id" name="invoice_id" class="form-control" value="<?php echo $next_invoice; ?>"></td>
+										</tr>
+										<tr>
+											<td><label for="owner_site">Shop</label></td>
+											<td><input readonly type="text" id="owner_site" class="form-control" value="<?php echo $url; ?>"></td>
+										</tr>
+										<tr>
+											<td><label for="order_id">Ordre ID</label></td>
+											<td><input readonly type="text" id="order_id" class="form-control" value="<?php echo $internal_order_id; ?>"></td>
+										</tr>
+										<tr>
+											<td><label for="currency">Valuta</label></td>
+											<td><input type="text" id="currency" class="form-control" name="currency" placeholder="Eks. DKK" value="DKK"></td>
+										</tr>
+										<tr>
+											<td><label for="status">Status</label></td>
+											<td>
+												<select class="form-control" name="status" id="status">
+													<option selected value="completed">Færdig</option>
+													<option value="refunded">Refunderet</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<td><label for="order_created_at">Lavet</label></td>
+											<td><input type="text" id="order_created_at" class="form-control" name="order_created_at" placeholder="Eks. 2016-02-01 09:02:05"></td>
+										</tr>
+										<tr>
+											<td><label for="order_updated_at">Opdateret</label></td>
+											<td><input type="text" id="order_updated_at" class="form-control" name="order_updated_at" placeholder="Eks. åååå-mm-dd tt:mm:ss"></td>
+										</tr>
+										<tr>
+											<td><label for="order_completed_at">Færdig</label></td>
+											<td><input type="text" id="order_completed_at" class="form-control" name="order_completed_at" placeholder="Eks. åååå-mm-dd tt:mm:ss"></td>
+										</tr>
+										<tr><td></td><td></td></tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tr>
+											<td><label for="customer_ip">Kunde IP</label></td>
+											<td><input disabled type="text" id="customer_ip" class="form-control" value="<?php echo get_current_user_ip(); ?> (Din IP)"></td>
+										</tr>
+										<tr>
+											<td><label for="customer_id">Kunde ID</label></td>
+											<td><input disabled type="text" id="customer_id" class="form-control" value="<?php echo $_SESSION['user_id']; ?> (Dit bruger ID)"></td>
+										</tr>
+										<tr>
+											<td><label for="payment">Betaling</label></td>
+											<td>
+												<select name="payment" id="payment" class="form-control">
+													<option value="wiretransfer_Bankoverførsel">Bankoverførsel</option>
+													<option selected value="cash_Kontant">Kontant</option>
+													<option value="creditcart_Kreditkort">Kreditkort</option>
+													<option value="other_Andet">Andet</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<td><label for="is_paid">Er betalt?</label></td>
+											<td>
+												<select name="is_paid" id="is_paid" class="form-control">
+													<option value="yes">Ja</option>
+													<option value="no">Nej</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<td><label for="note">Note</label></td>
+											<td><textarea name="note" id="note" rows="8" class="form-control"></textarea></td><?php /*<input type="text" class="form-control" id="note" name="note">*/ ?>
+										</tr>
+										<tr><td></td><td></td></tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-12"><h3>Ordrelinjer</h3></div>
+							<div class="col-sm-12">
+								<div class="table-responsive">
+									<table class="table table-striped" id="orderlines_table">
+										<tr id="orderlines_header">
+											<th></th>
+											<th>Navn</th>
+											<th>Stk. pris</th>
+											<th>Mængde</th>
+											<th>Subtotal</th>
+											<th>Total moms</th>
+											<th>Total</th>
+										</tr>
+										<tr class="product_row">
+											<td>Produkt:</td>
+											<td><input class="form-control" data-row="product" data-id="0" data-name="name" name="product[0][name]" type="text"></td>
+											<td><input min="0" pattern="[0-9]+([\.,][0-9]+)?" step="0.01" class="form-control" oninput="calculate_line(this)" data-row="product" data-id="0" data-name="qty_price" name="product[0][qty_price]" type="number"></td>
+											<td><input min="1" class="form-control" oninput="calculate_line(this)" data-row="product" data-id="0" data-name="qty" name="product[0][qty]" type="number" value="1"></td>
+											<td><input min="0" readonly class="form-control" oninput="calculate_line(this)" data-row="product" data-id="0" data-name="subtotal" name="product[0][subtotal]" type="number" value="0"></td>
+											<td><input min="0" readonly class="form-control" data-row="product" data-id="0" data-name="total_tax" name="product[0][total_tax]" type="number" value="0"></td>
+											<td><input min="0" readonly class="form-control" data-row="product" data-id="0" data-name="total" name="product[0][total]" type="number" value="0"></td>
+										</tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-12">
+								<div class="table-responsive">
+									<table class="table table-striped">
+										<tr id="total_row">
+											<td>I alt</td>
+											<td></td>
+											<td></td>
+											<td><input readonly class="form-control" type="number" name="total_line_items" id="total_line_items" value="1"></td>
+											<td><input readonly class="form-control" type="number" name="subtotal" id="subtotal" value="0"></td>
+											<td><input readonly class="form-control" type="number" name="total_tax" id="total_tax" value="0"></td>
+											<td><input readonly class="form-control" type="number" name="total_price" id="total_price" value="0"></td>
+										</tr>
+										<tr id="total_discount_row">
+											<td>Rabat i alt</td>
+											<td>(er fratrukket)</td>
+											<td></td>
+											<td></td>
+											<td><input readonly class="form-control" type="number" id="discount_subtotal" value="0"></td>
+											<td><input readonly class="form-control" type="number" id="discount_total_tax" value="0"></td>
+											<td><input readonly class="form-control" type="number" name="total_discount" id="total_discount" value="0"></td>
+										</tr>
+										<tr id="add_lines">
+											<td>Tilføj nye linjer</td>
+											<td></td>
+											<td></td>
+											<td>
+												<button id="add_product" onclick="add_line(this); return false;" data-name="product" class="btn btn-default">+ Produktlinje</button>
+											</td>
+											<td>
+												<button id="add_shipping" onclick="add_line(this); return false;" data-name="shipping" class="btn btn-default">+ Leveringslinje</button>
+											</td>
+											<td>
+												<button id="add_fee" onclick="add_line(this); return false;" data-name="fee" class="btn btn-default">+ Gebyrlinje</button>
+											</td>
+											<td>
+												<button id="add_discount" onclick="add_line(this); return false;" data-name="discount"  class="btn btn-default">+ Rabatlinje</button>
+											</td>
+										</tr>
+										<tr id="subtract_lines">
+											<td>Fjern linjer</td>
+											<td></td>
+											<td></td>
+											<td>
+												<button id="subtract_product" onclick="remove_line(this); return false;" data-name="product" class="btn btn-default">- Produktlinje</button>
+											</td>
+											<td>
+												<button id="subtract_shipping" onclick="remove_line(this); return false;" data-name="shipping" class="btn btn-default">- Leveringslinje</button>
+											</td>
+											<td>
+												<button id="subtract_fee" onclick="remove_line(this); return false;" data-name="fee" class="btn btn-default">- Gebyrlinje</button>
+											</td>
+											<td>
+												<button id="subtract_discount" onclick="remove_line(this); return false;" data-name="discount" class="btn btn-default">- Rabatlinje</button>
+											</td>
+										</tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-12"><h3>Kundedetaljer</h3></div>
+							<div class="col-sm-6">
+								<h5>Faktureringsoplysninger</h5>
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tr>
+											<td><label for="billing_firstname">Fornavn</label></td>
+											<td><input required type="text" id="billing_firstname" name="billing_firstname" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_lastname">Efternavn</label></td>
+											<td><input type="text" id="billing_lastname" name="billing_lastname" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_address_1">Adresse 1</label></td>
+											<td><input required type="text" id="billing_address_1" name="billing_address_1" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_address_2">Adresse 2</label></td>
+											<td><input type="text" id="billing_address_2" name="billing_address_2" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_city">By</label></td>
+											<td><input required type="text" id="billing_city" name="billing_city" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_postcode">Postnummer</label></td>
+											<td><input required type="number" id="billing_postcode" name="billing_postcode" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_country">Land</label></td>
+											<td><input required type="text" id="billing_country" name="billing_country" class="form-control" placeholder="Eks: DK" value="DK"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_company">Virksomhed</label></td>
+											<td><input type="text" id="billing_company" name="billing_company" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_email">E-mail</label></td>
+											<td><input type="email" id="billing_email" name="billing_email" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="billing_phone">Telefon</label></td>
+											<td><input type="number" id="billing_phone" name="billing_phone" class="form-control"></td>
+										</tr>
+										<tr><td></td><td></td></tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<h5>Forsendelsesoplysninger</h5>
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tr>
+											<td><label for="shipping_firstname">Fornavn</label></td>
+											<td><input required type="text" id="shipping_firstname" name="shipping_firstname" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_lastname">Efternavn</label></td>
+											<td><input type="text" id="shipping_lastname" name="shipping_lastname" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_address_1">Adresse 1</label></td>
+											<td><input required type="text" id="shipping_address_1" name="shipping_address_1" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_address_2">Adresse 2</label></td>
+											<td><input type="text" id="shipping_address_2" name="shipping_address_2" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_city">By</label></td>
+											<td><input required type="text" id="shipping_city" name="shipping_city" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_postcode">Postnummer</label></td>
+											<td><input required type="number" id="shipping_postcode" name="shipping_postcode" class="form-control"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_country">Land</label></td>
+											<td><input required type="text" id="shipping_country" name="shipping_country" class="form-control" placeholder="Eks: DK" value="DK"></td>
+										</tr>
+										<tr>
+											<td><label for="shipping_company">Virksomhed</label></td>
+											<td><input type="text" id="shipping_company" name="shipping_company" class="form-control"></td>
+										</tr>
+										<tr><td></td><td></td></tr>
+									</table>
+								</div>
+							</div>	
+							<div class="col-sm-12">
+								<input class="btn btn-primary btn-lg btn-block" type="submit" name="add_order" value="Tilføj ordre">
+							</div>
+						</div>
+					</form>
+					<?php #echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>
 				<?php elseif($action == 'view'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Vis</h1>
 					<div class="row">
@@ -188,7 +507,7 @@ require '../templates/admin/header.php';
 									</tr>
 									<tr>
 										<td>Ordre ID</td>
-										<td>#<?php echo $order['order_id']; ?> (<a href="<?php echo $order['owner_site_url']; ?>/wp-admin/post.php?post=<?php echo $order['order_id']; ?>&action=edit" title="Vis ordre på <?php echo $order['owner_site_name']; ?>" target="_blank">Vis ordre</a>)</td>
+										<td>#<?php echo $order['order_id']; ?> (<a href="<?php echo ($order['owner_site_id'] != 0) ? $order['owner_site_url'].'/wp-admin/post.php?post='.$order['order_id'].'&action=edit' : BASE_URL.'/admin/orders.php?invoice_id='.$order['invoice_id'].'&action=view' ; ?>" title="Vis ordre på <?php echo $order['owner_site_name']; ?>" target="_blank">Vis ordre</a>)</td>
 									</tr>
 									<tr>
 										<td>Valuta</td>
@@ -291,23 +610,24 @@ require '../templates/admin/header.php';
 												<td>Fragt: <?php echo $line['method_title'] ?></td>
 												<td></td>
 												<td></td>
-												<td></td>
+												<td><?php echo number_format($line['total']*1.25*0.8, 2, ',', '.'); ?></td>
 												<td><?php echo number_format($line['total']*1.25*0.2, 2, ',', '.'); ?></td>
 												<td><?php echo number_format($line['total']*1.25, 2, ',', '.'); ?></td>
 											</tr>
 										<?php endforeach; ?>
 									<?php endif; ?>
-									<?php $fee = 0; ?>
+									<?php $fee = 0; $fee_tax = 0; ?>
 									<?php if(!empty($order['fee_lines']) && $order['fee_lines'] != ''): ?>
 										<?php foreach($order['fee_lines'] as $line): ?>
 											<tr>
 												<td>Gebyr: <?php echo $line['title']; ?></td>
 												<td></td>
 												<td></td>
-												<td></td>
-												<td><?php echo number_format($line['total_tax'], 2, ',', '.'); ?></td>
 												<td><?php echo number_format($line['total'], 2, ',', '.'); ?></td>
-												<?php $fee = $fee + $line['total'] + $line['total_tax']; ?>
+												<td><?php echo number_format($line['total_tax'], 2, ',', '.'); ?></td>
+												<td><?php echo number_format($line['total']+$line['total_tax'], 2, ',', '.'); ?></td>
+												<?php $fee += $line['total']; ?>
+												<?php $fee_tax += $line['total_tax']; ?>
 											</tr>
 										<?php endforeach; ?>
 									<?php endif; ?>
@@ -324,9 +644,8 @@ require '../templates/admin/header.php';
 											if ($subtotal != 0 && $difference != 0 && $difference != -0 && $difference != '0' && $difference != '-0') {
 												$subtotal = $subtotal + $difference;
 											}
-
 										?>
-										<td><?php echo number_format($subtotal, 2, ',', '.'); ?></td>
+										<td><?php echo number_format($subtotal+$order['total_shipping']+$fee, 2, ',', '.'); ?></td>
 										<td><?php echo number_format($order['total_tax'], 2, ',', '.'); ?></td>
 										<td><?php echo number_format($order['total'], 2, ',', '.'); ?></td>
 									</tr>
@@ -347,9 +666,9 @@ require '../templates/admin/header.php';
 											<td>Rabat i alt (er fratrukket)</td>
 											<td></td>
 											<td></td>
-											<td></td>
-											<td></td>
 											<td>-<?php echo number_format($order['total_discount'], 2, ',', '.'); ?></td>
+											<td>-<?php echo number_format(($order['total_discount']*1.25*0.2), 2, ',', '.'); ?></td>
+											<td>-<?php echo number_format(($order['total_discount']*1.25), 2, ',', '.'); ?></td>
 										</tr>
 									<?php endif; ?>
 								</table>
@@ -441,7 +760,6 @@ require '../templates/admin/header.php';
 							<?php echo message('Ordreren kan have en difference på 1 øre, grundet afrunding. Dette er dog udlignet i eksport-funktionerne.', 'info', false); ?>
 						</div> */ ?>
 					</div>
-					<?php #echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>
 				<?php elseif($action == 'edit'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Rediger</h1>
 					<?php echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>

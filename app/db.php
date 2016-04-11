@@ -41,9 +41,7 @@ $message = '';
 
 #Make pdf template
 #Export .pdf in both bulk and by checkbox
-
-#Edit orders directly
-#Add orders directly
+#(Edit orders directly)
 
 # Lines of code wc api = 2539
 # Lines of code by Rasmus = 1962 + 654
