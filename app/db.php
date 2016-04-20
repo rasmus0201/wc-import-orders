@@ -34,6 +34,25 @@ define('BASE_URL', $db_settings['base_url']);
 define('TEMPLATES_URL', BASE_URL.'/templates');
 define('STATIC_URL', BASE_URL.'/static');
 
+if (isset($_SESSION['loggedin']))  {
+	if ($_SESSION['loggedin'] == true) {
+		$sth_1 = $db->prepare("SELECT COUNT(*) FROM orders");
+		$sth_2 = $db->prepare("SELECT COUNT(*) FROM invoices");
+		$sth_3 = $db->prepare("SELECT COUNT(*) FROM sites");
+		$sth_4 = $db->prepare("SELECT COUNT(*) FROM users");
+
+		$result_1 = $sth_1->execute();
+		$result_2 = $sth_2->execute();
+		$result_3 = $sth_3->execute();
+		$result_4 = $sth_4->execute();
+
+		$_SESSION['orders_count'] = $sth_1->fetchColumn();
+		$_SESSION['invoices_count'] = $sth_2->fetchColumn();
+		$_SESSION['sites_count'] = $sth_3->fetchColumn();
+		$_SESSION['users_count'] = $sth_4->fetchColumn();
+	}
+}
+
 $message = '';
 
 #On next push

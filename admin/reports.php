@@ -16,7 +16,7 @@ if (isset($_POST['this_year'])) {
 } else if (isset($_POST['last_month'])) {
 	$min_date = date('Y-m-d', strtotime('first day of last month'));
 	$max_date = date('Y-m-d', strtotime('last day of last month'));
-	$sorting_method = 'month';
+	$sorting_method = 'day';
 } else if (isset($_POST['last_week'])) {
 	$min_date = date('Y-m-d', strtotime('last week') );
 	$max_date = date('Y-m-d', strtotime(closestDate('monday'))-1 );

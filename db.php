@@ -4,6 +4,8 @@ ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 mb_internal_encoding("UTF-8");
 
+date_default_timezone_set("Europe/Copenhagen");
+
 session_start();
 
 try {
@@ -24,55 +26,52 @@ foreach ($db_settings as $setting => $value) {
 	unset($db_settings[$value['id']-1]);
 }
 
-$message = '';
-
 define('BASE_PATH', $db_settings['base_path']);
-define('BASE_URL', $db_settings['base_url']);
-
-define('TEMPLATES_URL', BASE_URL.'/templates');
-define('STATIC_URL', BASE_URL.'/static');
-
 define('TEMPLATES_PATH', BASE_PATH.'/templates');
 define('STATIC_PATH', BASE_PATH.'/static');
 
-function fullpageurl() {
-    $pageURL = 'http://';
-    if ($_SERVER["SERVER_PORT"] != "80") {
-        $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
-    } else {
-        $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-    }
-    return $pageURL;
+define('BASE_URL', $db_settings['base_url']);
+define('TEMPLATES_URL', BASE_URL.'/templates');
+define('STATIC_URL', BASE_URL.'/static');
+
+if (isset($_SESSION['loggedin']))  {
+	if ($_SESSION['loggedin'] == true) {
+		$sth_1 = $db->prepare("SELECT COUNT(*) FROM orders");
+		$sth_2 = $db->prepare("SELECT COUNT(*) FROM invoices");
+		$sth_3 = $db->prepare("SELECT COUNT(*) FROM sites");
+		$sth_4 = $db->prepare("SELECT COUNT(*) FROM users");
+
+		$result_1 = $sth_1->execute();
+		$result_2 = $sth_2->execute();
+		$result_3 = $sth_3->execute();
+		$result_4 = $sth_4->execute();
+
+		$_SESSION['orders_count'] = $sth_1->fetchColumn();
+		$_SESSION['invoices_count'] = $sth_2->fetchColumn();
+		$_SESSION['sites_count'] = $sth_3->fetchColumn();
+		$_SESSION['users_count'] = $sth_4->fetchColumn();
+
+		var_dump($sth_4->fetchAll(PDO::FETCH_ASSOC));
+	}
 }
 
+$message = '';
 
-//$_SESSION['invoices_count'] = 0;
-//$_SESSION['orders_count'] = 0;
+#On next push
+	#Make ready for wc subscriptions
+	#(Edit orders directly)
 
-#Login, Logout, Register function
-	#Make "Administration panel admin-panel"
-#User Interface
-	#invoice/order Tables: Order by date, id, or total-order-price, or name
-	#Make some reports (daily, weekly, monthly, yearly, custom)
-		#See vat, subtotal, total, shipping, shipping vat, fees
-		#Also see dates and other info.
-	#Export
-		#Choose invoices
-			#Either from invoice_xx to invoice_yy or by date
-		#Choose the export form 
-			#PDF
-
+#Clean up files
 
 # Lines of code wc api = 2539
-# Lines of code by Rasmus = 1962
-# Lines of code total = 4501
+# Lines of code by Rasmus = 1962 + 654
+# Lines of code total = 4501 + 654
 
-# Lines now = 4963
-# Lines now = 5427
+# Lines now = 4963 + 654
+# Lines now = 5427 + 654
+# Lines now = 6181 + 654
+# Lines now = 6579 + 654
+# Lines now = 7259 + 654
+# Lines now = 7769 + 839 = 8608 - 1962 = 6646
 
 # Terminal = find . -name '*.php' | xargs wc -l
-
-
-
-
-
