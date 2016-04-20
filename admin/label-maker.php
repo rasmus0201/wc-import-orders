@@ -8,226 +8,164 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 }
 
 if (isset($_POST['make_label'])) {
+	require BASE_PATH.'/lib/tcpdf.php';
 
-	if (isset($_POST['save_as_html'])) {
-		header('Content-type: application/pdf');
-		header('Content-disposition: attachment; filename='.$_POST['name'].' - Ingrediens label.html');
-		header('Pragma: no-cache');
-		header('Expires: 0');
+	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+	$pdf->SetCreator(PDF_CREATOR);
+	$pdf->SetAuthor('Ulvemosens Handelsselskab ApS');
+	$pdf->SetTitle('Fakturaer - Ulvemosens Handelsselskab ApS');
+	$pdf->SetSubject('Fakturaer - Ulvemosens Handelsselskab ApS');
+	$pdf->SetKeywords('Fakturaer, Ulvemosens Handelsselskab ApS');
+	$pdf->SetPrintHeader(false);
+	$pdf->SetPrintFooter(false);
+	$pdf->SetMargins(0, 0, 0, 0);
+	$pdf->SetAutoPageBreak(false, 0);
+	$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+	$pdf->setFontSubsetting(true);
+	$pdf->SetFont('helvetica', '', 7, '', true);
+	$pdf->setCellPaddings(1, 3, 1, 1);
+	$pdf->setCellMargins(1, 3, 1, 1);
+	$pdf->SetFillColor(255, 255, 255);
+	$pdf->AddPage();
+
+	$y = $pdf->getY();
+	$x = $pdf->getX();
+	$cell = '<strong>'.$_POST['name'].'</strong><br>Ingredienser: '.$_POST['ingredients'];
+
+	if ($_POST['format'] == '3by8') {
+		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 750) {
+			$pdf->SetFont('helvetica', '', 5, '', true);
+			$pdf->setCellPaddings(1, 10, 1, 1);
+		}
+
+		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 1300) {
+			$pdf->SetFont('helvetica', '', 3.5, '', true);
+			$pdf->setCellPaddings(1, 15, 1, 1);
+		}
+		#New row
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+	
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+
+	} else if ($_POST['format'] == '3by7') {
+		$pdf->setCellPaddings(2, 4, 2, 4);
+		$pdf->setCellMargins(1, 4, 1, 1);
+
+		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 750) {
+			$pdf->SetFont('helvetica', '', 5, '', true);
+			$pdf->setCellPaddings(2, 8, 2, 2);
+		}
+
+		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 1300) {
+			$pdf->SetFont('helvetica', '', 3.5, '', true);
+			$pdf->setCellPaddings(2, 12, 2, 2);
+		}
+
+		#New row
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+0, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+0, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+0, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+
+		#New row
+		$y = $pdf->getY();
+
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
 	}
 
-	?>
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title><?php echo $_POST['name'].' - Ingrediens label'; ?></title>
-		<style>
-			@page { size: auto;  margin: 0mm; max-height: 297mm; page-break-after: auto; page-break-before: auto; }
-			@media print { html, body { height: auto; page-break-after: auto; page-break-before: auto; } #back{ display: none; } }
-			html{ max-height: 296mm; }
-			body{ max-width: 210mm; max-height: 296mm; margin: 3mm 2mm 0mm 2mm; font-family: Calibri;}
-			.container {
-				width: 33%;
-				max-height: 296mm;
-				display: inline-block;
-			}
+	$pdf->lastPage();
 
-			.container .flex-container .flex-item:first-of-type{
-				margin-top: 15px;
-			}
-			.container .flex-container .flex-item:last-of-type{
-				margin-bottom: 0;
-			}
+	$pdf->Output($_POST['name'].'.pdf', 'I');
 
-			.flex-container{
-				display: -webkit-flex;
-				display: flex;
-				-webkit-flex-direction: column; 
-				flex-direction: column;
-				-webkit-align-items: stretch;
-				align-items: stretch;
-			}
-
-			.flex-item {
-				font-size: 8px;
-				margin: <?php echo (str_replace('3by', '', $_POST['format'] == 7)) ? '10' : '12' ; ?>px 3px 3px 3px;
-				height: calc(<?php echo (str_replace('3by', '', $_POST['format'] == 7)) ? '250' : '240' ; ?>mm/<?php echo str_replace('3by', '', $_POST['format']); ?>);
-				position: relative;
-				display: block;
-				/*display: -webkit-box;
-				display: -moz-box;
-				display: -ms-flexbox;
-				display: -webkit-flex;
-				display: flex;
-				-webkit-box-orient: vertical;
-				-moz-box-orient: vertical;
-				-webkit-box-direction: normal;
-				-moz-box-direction: normal;
-				-webkit-flex-direction: column;
-				-ms-flex-direction: column;
-				flex-direction: column;
-				-webkit-align-items: stretch;
-				align-items: stretch;*/
-			}
-			.flex-item .name{
-				display: block;
-			}
-			#back{
-				position: absolute;
-				top: 2px;
-				left: 10px;
-			}
-			<?php if($_POST['format'] == '3by8'): ?>
-				body{
-					margin-left: 0 !important;
-					margin-right: 0 !important;
-				}
-
-				.container {
-					width: 32%;
-				}
-
-				.container:nth-child(3){
-					margin-left: 5.9mm;
-					/*padding-left: 5mm;*/
-				}
-			<?php elseif($_POST['format'] == '3by7'): ?>
-				body{
-					margin-top: 10mm;
-					margin-left: 0;
-					margin-right: 0;
-					width: 210mm;
-				}
-				.container {
-					width: 62mm;
-				}
-				.container:nth-child(1){
-					margin-left: 7mm;
-				}
-				.container:nth-child(2){
-					margin-left: 3mm;
-					margin-right: 3mm;
-				}
-				.container:nth-child(3){
-					margin-right: 7mm;
-				}
-				.container:nth-child(3) .flex-container{
-					padding-left: 4mm;
-				}
-
-				.container .flex-container .flex-item:nth-child(1){
-					margin-bottom: 4mm;
-				}
-				.container .flex-container .flex-item:nth-child(2){
-					margin-bottom: 6mm;
-				}
-				.container .flex-container .flex-item:nth-child(3){
-					margin-bottom: 4mm;
-				}
-				.container .flex-container .flex-item:nth-child(4){
-					margin-bottom: 6mm;
-				}
-			<?php endif; ?>
-		</style>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-		<script>
-			$(document).ready(function(){
-				if ($('body').innerHeight() > 1100 ) {
-					$('.flex-item').css('font-size', '8px');
-
-					if ($('body').innerHeight() > 1100) {
-						$('.flex-item').css('font-size', '7px');
-
-						if ($('body').innerHeight() > 1100) {
-							$('.flex-item').css('font-size', '6px');
-						}
-					}
-				}
-			});
-		</script>
-	</head>
-	<body>
-	<?php
-	if ($_POST['format'] == '3by7') {
-		?>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 7 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 7 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 7 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<?php if(!isset($_POST['save_as_html'])): ?>
-					<div id="back"><a href="<?php echo BASE_URL.'/'.$global['current_url']; ?>">Tilbage?</a></div>
-				<?php endif; ?>
-			</body>
-		</html>
-		<?php
-		exit;
-	} else if ($_POST['format'] == '3by8') {
-		?>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 8 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 8 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<div class="container">
-					<div class="flex-container">
-						<?php for ($i=1; $i <= 8 ; $i++): ?>
-							<div class="flex-item">
-								<strong class="name"><?php echo $_POST['name']; ?></strong>
-								<strong>Ingredienser: </strong><?php echo trim(htmlspecialchars_decode($_POST['ingredients'])); ?>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-				<?php if(!isset($_POST['save_as_html'])): ?>
-					<div id="back"><a href="<?php echo BASE_URL.'/'.$global['current_url']; ?>">Tilbage?</a></div>
-				<?php endif; ?>
-			</body>
-		</html>
-		<?php
-		exit;
-	}
+	exit;
 }
 
 require '../templates/admin/header.php';
@@ -257,13 +195,9 @@ require '../templates/admin/header.php';
 							<option <?php echo ($_POST['format'] == '3by8') ? 'selected' : '' ;?> value="3by8">3 x 8</option>
 						<?php else: ?>
 							<option value="3by7">3 x 7</option>
-							<option value="3by8">3 x 8</option>
+							<option selected value="3by8">3 x 8</option>
 						<?php endif; ?>
 					</select>
-				</div>
-				<div class="form-group">
-					<label for="save_as_html">Gem som HTML</label>
-					<input type="checkbox" id="save_as_html" name="save_as_html" value="on">
 				</div>
 				<div class="form-group">
 					<button type="submit" class="btn btn-primary" name="make_label" style="width:100%;">Lav label</button>

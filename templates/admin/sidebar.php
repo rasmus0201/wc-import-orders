@@ -4,7 +4,6 @@ if (!defined('BASE_URL')) {
 	header('HTTP/1.0 404 not found');
 	exit;
 }
-/* <span class="sr-only">(aktuelle)</span>*/
 ?>
 
 <div class="col-sm-3 col-md-2 sidebar">

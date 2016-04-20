@@ -36,12 +36,11 @@ define('STATIC_URL', BASE_URL.'/static');
 
 $message = '';
 
-//$_SESSION['invoices_count'] = 0;
-//$_SESSION['orders_count'] = 0;
+#On next push
+	#Make ready for wc subscriptions
+	#(Edit orders directly)
 
-#Make pdf template
-#Export .pdf in both bulk and by checkbox
-#(Edit orders directly)
+#Clean up files
 
 # Lines of code wc api = 2539
 # Lines of code by Rasmus = 1962 + 654
@@ -52,10 +51,6 @@ $message = '';
 # Lines now = 6181 + 654
 # Lines now = 6579 + 654
 # Lines now = 7259 + 654
+# Lines now = 7769 + 839 = 8608 - 1962 = 6646
 
 # Terminal = find . -name '*.php' | xargs wc -l
-
-
-
-
-

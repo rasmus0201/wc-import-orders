@@ -312,14 +312,3 @@ function get_current_datetime() {
 	second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
 	return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
 }
-
-
-
-
-
-
-
-
-
-
-

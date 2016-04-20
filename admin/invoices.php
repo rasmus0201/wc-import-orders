@@ -8,19 +8,16 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 	header('Location: '.BASE_URL);
 	exit;
 }
-if ((isset($_POST['export_csv']) || isset($_POST['export_pdf']) || isset($_POST['export_csv_bulk']) || isset($_POST['export_csv_bulk'])) && check_user_abilities_min_accountant() ) {
+if ((isset($_POST['export_csv']) || isset($_POST['export_pdf']) || isset($_POST['export_csv_bulk']) || isset($_POST['export_pdf_bulk'])) && check_user_abilities_min_accountant() ) {
 	if ( (!empty($_POST['invoices']) && !is_null($_POST['invoices']) && $_POST['invoices'] != '') || ($_POST['export_bulk_from'] != '' && $_POST['export_bulk_to'] != '') ) {
 		if (isset($_POST['export_csv'])) {
 			download_csv_orders_by_ids($_POST['invoices']);
 		} else if (isset($_POST['export_csv_bulk'])) {
-			//download_pdf_orders_by_ids($_POST['invoices']);
 			download_csv_orders_by_ids($_POST['export_bulk_from'].'-'.$_POST['export_bulk_to'], true);
 		} else if (isset($_POST['export_pdf'])) {
-			//download_pdf_orders_by_ids($_POST['invoices']);
-			$message = message('.pdf eksport-funktionen kommer snart!', 'danger');
+			download_pdf_orders_by_ids($_POST['invoices']);
 		}  else if (isset($_POST['export_pdf_bulk'])) {
-			//download_pdf_orders_by_ids($_POST['invoices']);
-			$message = message('.pdf eksport-funktionen kommer snart!', 'danger');
+			download_pdf_orders_by_ids($_POST['export_bulk_from'].'-'.$_POST['export_bulk_to'], true);
 		} else {
 			$message = message('Noget gik galt.', 'danger');
 		}

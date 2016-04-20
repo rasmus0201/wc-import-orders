@@ -7,8 +7,6 @@ if (!defined('BASE_URL')) {
 }
 
 function fullpageurl() {
-	//define('BASE_PATH', getcwd().'/');
-	//define('BASE_URL', fullpageurl());
 	$pageURL = 'http://';
 	if ($_SERVER["SERVER_PORT"] != "80") {
 		$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
@@ -211,12 +209,12 @@ function change_site_details($site_id, $name, $old_url, $new_url, $ck, $cs, $add
 		return message('Noget gik galt.', 'danger');
 	}
 
-	if(!strstr($new_url, 'http://') && !strstr($new_url, 'https://')){
+	/*if(!strstr($new_url, 'http://') && !strstr($new_url, 'https://')){
 		$url = 'http://'.$new_url;
 	}
 	if(!strstr($company_logo_url, 'http://') && !strstr($company_logo_url, 'https://')){
 		$company_logo_url = 'http://'.$company_logo_url;
-	}
+	}*/
 
 	$new_url = rtrim($new_url, '/');
 	$company_logo_url = rtrim($company_logo_url, '/');
@@ -320,9 +318,9 @@ function add_site($name, $url, $ck, $cs, $address, $postcode, $city, $company_na
 		return message('Alle felter, undtagen logo url & cvr. nr., skal udfyldes.', 'danger');
 	}
 
-	if(!strstr($url, 'http://') && !strstr($url, 'https://')){
+	/*if(!strstr($url, 'http://') && !strstr($url, 'https://')){
 		$url = 'http://'.$url;
-	}
+	}*/
 
 	$url = rtrim($url, '/');
 
@@ -470,7 +468,26 @@ function get_settings(){
 	return $settings;
 }
 
-function add_order($products, $shippings, $fees, $discounts, $billing_details, $shipping_details, $currency, $status, $order_created_at, $order_updated_at, $order_completed_at, $payment_method, $is_paid, $note/*, $total_line_items, $subtotal, $total, $total_tax, $total_discount*/){
+function get_order_for_table(){
+	global $db;
+	$sth = $db->prepare("SELECT invoice_id, order_id, owner_site_id, owner_site_url, owner_site_name, billing_address FROM orders");
+	$sth->execute();
+	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+	$results = json_decode(json_encode($results), 1);
+
+	foreach ($results as $order => $value) {
+		$value['billing_address'] = json_decode($value['billing_address'], 1);
+
+		$results[$value['order_id'].'_'.$value['owner_site_id']] = $value;
+		$results[$order] = [];
+		unset($results[$order]);
+	}
+
+	return $results;
+}
+
+function add_order($products, $shippings, $fees, $discounts, $billing_details, $shipping_details, $currency, $status, $order_created_at, $order_updated_at, $order_completed_at, $payment_method, $is_paid, $note){
 	global $db, $db_settings;
 	$next_invoice = get_setting('next_invoice');
 	$internal_order_id = get_setting('next_internal_order_id');
@@ -624,46 +641,9 @@ function add_order($products, $shippings, $fees, $discounts, $billing_details, $
 	$billing_address = json_encode($billing_details);
 	$shipping_address = json_encode($shipping_details);
 
-	//ready to save in db :DDDD
 	$customer_ip = get_current_user_ip();
 	$customer_id = $_SESSION['user_id'];
 	$view_order_url = BASE_URL.'/admin/orders.php?invoice_id='.$next_invoice.'&action=view';
-
-	/*$order = [
-		'id' => 'xx',
-		'invoice_id' => $next_invoice,
-		'owner_site_id' => $site_id,
-		'owner_site_url' => $url,
-		'owner_site_name' => $site_name,
-		'order_id' => $internal_order_id,
-		'order_created_at' => $order_created_at,
-		'order_updated_at' => $order_updated_at,
-		'order_completed_at' => $order_completed_at,
-		'status' => $status,
-		'currency' => $currency,
-		'total' => $total,
-		'subtotal' => $subtotal,
-		'total_tax' => $total_tax,
-		'total_shipping' => $total_shipping,
-		'shipping_tax' => $shipping_tax,
-		'cart_tax' => $cart_tax,
-		'total_discount' => $total_discount,
-		'shipping_methods' => $shipping_methods,
-		'payment_details' => $payment_details,
-		'billing_address' => $billing_details,
-		'shipping_address' => $shipping_details,
-		'total_line_items_quantity' => $total_line_items,
-		'note' => $note,
-		'customer_ip' => $customer_ip,
-		'customer_id' => $customer_id,
-		'view_order_url' => $view_order_url,
-		'line_items' => $line_items,
-		'shipping_lines' => $shipping_lines,
-		'tax_lines' => $tax_lines,
-		'fee_lines' => $fee_lines,
-		'coupon_lines' => $coupon_lines,
-		'export_csv' => $export_csv,
-	];*/
 
 	$sth = $db->prepare("INSERT INTO orders (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `order_created_at`, `order_updated_at`, `order_completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`, `updated_at`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name,  :order_id, :order_created_at, :order_updated_at, :order_completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv, NOW(), NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`");
 	$sth->bindParam(':invoice_id', $next_invoice);
@@ -888,44 +868,319 @@ function download_csv_orders_by_ids($orders, $export_bulk = false){
 	exit;
 }
 
-function download_pdf_orders_by_ids($orders){
+function download_pdf_orders_by_ids($orders, $export_bulk = false){
 	if (is_null($orders) || empty($orders) ) {
 		return false;
 	}
 	global $db, $global;
 
 	$sql = "SELECT * FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+	$sql_2 = "SELECT * FROM sites WHERE id = :owner_site_id LIMIT 1";
 
 	$invoices = '';
 
-	foreach ($orders as $order => $value) {
-		if ($value == 'on') {
-			$invoice_id = explode('_', $order)[1];
-			$sth = $db->prepare($sql);
-			$sth->bindParam(':invoice_id', $invoice_id);
+	if ($export_bulk) {
+		$sql = "SELECT * FROM orders WHERE invoice_id >= :min_id AND invoice_id <= :max_id";
+		$min_id = explode('-', $orders)[0];
+		$max_id = explode('-', $orders)[1];
 
-			$sth->execute();
+		$sth = $db->prepare($sql);
+		$sth->bindParam(':min_id', $min_id);
+		$sth->bindParam(':max_id', $max_id);
+		$res = $sth->execute();
 
-			$result = $sth->fetch(PDO::FETCH_ASSOC);
+		$results = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-			if ($result) {
-				$invoices['invoice_'.$invoice_id] = $result;
-			} else {
-				header('Location: '.BASE_URL.'/'.$global['current_url']);
-				exit;
+		if ($res) {
+			foreach ($results as $result => $value) {
+				$invoice_id = $value['invoice_id'];
+
+				$sth = $db->prepare($sql_2);
+				$sth->bindParam(':owner_site_id', $value['owner_site_id']);
+
+				$sth->execute();
+
+				$result_2 = $sth->fetch(PDO::FETCH_ASSOC);
+
+				$invoices['invoice_'.$invoice_id] = $value;
+				$invoices['invoice_'.$invoice_id]['site_address'] = $result_2['address'];
+				$invoices['invoice_'.$invoice_id]['site_postcode'] = $result_2['postcode'];
+				$invoices['invoice_'.$invoice_id]['site_city'] = $result_2['city'];
+				$invoices['invoice_'.$invoice_id]['site_company_name'] = $result_2['company_name'];
+				$invoices['invoice_'.$invoice_id]['site_company_vat'] = $result_2['company_vat'];
+				$invoices['invoice_'.$invoice_id]['site_company_logo_url'] = $result_2['company_logo_url'];
+
+				$invoices['invoice_'.$invoice_id]['shipping_methods'] = json_decode($value['shipping_methods'], 1);
+				$invoices['invoice_'.$invoice_id]['payment_details'] = json_decode($value['payment_details'], 1);
+				$invoices['invoice_'.$invoice_id]['billing_address'] = json_decode($value['billing_address'], 1);
+				$invoices['invoice_'.$invoice_id]['shipping_address'] = json_decode($value['shipping_address'], 1);
+				$invoices['invoice_'.$invoice_id]['line_items'] = json_decode($value['line_items'], 1);
+				$invoices['invoice_'.$invoice_id]['shipping_lines'] = json_decode($value['shipping_lines'], 1);
+				$invoices['invoice_'.$invoice_id]['tax_lines'] = json_decode($value['tax_lines'], 1);
+				$invoices['invoice_'.$invoice_id]['fee_lines'] = json_decode($value['fee_lines'], 1);
+				$invoices['invoice_'.$invoice_id]['coupon_lines'] = json_decode($value['coupon_lines'], 1);
+
+				unset($result_2);
+			}
+		} else {
+			header('Location: '.BASE_URL.'/'.$global['current_url']);
+			exit;
+		}
+	} else {
+		foreach ($orders as $order => $value) {
+			if ($value == 'on') {
+				$invoice_id = explode('_', $order)[1];
+				$sth = $db->prepare($sql);
+				$sth->bindParam(':invoice_id', $invoice_id);
+
+				$sth->execute();
+
+				$result = $sth->fetch(PDO::FETCH_ASSOC);
+
+				if ($result) {
+					$sth = $db->prepare($sql_2);
+					$sth->bindParam(':owner_site_id', $result['owner_site_id']);
+
+					$sth->execute();
+
+					$result_2 = $sth->fetch(PDO::FETCH_ASSOC);
+
+					$invoices['invoice_'.$invoice_id] = $result;
+					$invoices['invoice_'.$invoice_id]['site_address'] = $result_2['address'];
+					$invoices['invoice_'.$invoice_id]['site_postcode'] = $result_2['postcode'];
+					$invoices['invoice_'.$invoice_id]['site_city'] = $result_2['city'];
+					$invoices['invoice_'.$invoice_id]['site_company_name'] = $result_2['company_name'];
+					$invoices['invoice_'.$invoice_id]['site_company_vat'] = $result_2['company_vat'];
+					$invoices['invoice_'.$invoice_id]['site_company_logo_url'] = $result_2['company_logo_url'];
+
+					$invoices['invoice_'.$invoice_id]['shipping_methods'] = json_decode($result['shipping_methods'], 1);
+					$invoices['invoice_'.$invoice_id]['payment_details'] = json_decode($result['payment_details'], 1);
+					$invoices['invoice_'.$invoice_id]['billing_address'] = json_decode($result['billing_address'], 1);
+					$invoices['invoice_'.$invoice_id]['shipping_address'] = json_decode($result['shipping_address'], 1);
+					$invoices['invoice_'.$invoice_id]['line_items'] = json_decode($result['line_items'], 1);
+					$invoices['invoice_'.$invoice_id]['shipping_lines'] = json_decode($result['shipping_lines'], 1);
+					$invoices['invoice_'.$invoice_id]['tax_lines'] = json_decode($result['tax_lines'], 1);
+					$invoices['invoice_'.$invoice_id]['fee_lines'] = json_decode($result['fee_lines'], 1);
+					$invoices['invoice_'.$invoice_id]['coupon_lines'] = json_decode($result['coupon_lines'], 1);
+
+					unset($result_2);
+				} else {
+					header('Location: '.BASE_URL.'/'.$global['current_url']);
+					exit;
+				}
 			}
 		}
 	}
 
-	header('Content-type: application/pdf');
-	header('Content-disposition: attachment; filename=PDF Export '.date('Y-m-d H:i:s').'.pdf');
-	header('Pragma: no-cache');
-	header('Expires: 0');
+	require BASE_PATH.'/lib/tcpdf.php';
+
+	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+	$pdf->SetCreator(PDF_CREATOR);
+	$pdf->SetAuthor('Ulvemosens Handelsselskab ApS');
+	$pdf->SetTitle('Fakturaer - Ulvemosens Handelsselskab ApS');
+	$pdf->SetSubject('Fakturaer - Ulvemosens Handelsselskab ApS');
+	$pdf->SetKeywords('Fakturaer, Ulvemosens Handelsselskab ApS');
+	$pdf->SetPrintHeader(false);
+	$pdf->SetPrintFooter(false);
+	$pdf->SetMargins(PDF_MARGIN_LEFT, 10, PDF_MARGIN_RIGHT);
+	$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+	$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+	$pdf->setFontSubsetting(true);
+	$pdf->SetFont('helvetica', '', 14, '', true);
+	$pdf->setCellPaddings(1, 1, 1, 1);
+	$pdf->setCellMargins(1, 1, 1, 1);
+	$pdf->SetFillColor(255, 255, 255);
+	$pdf->SetLineWidth(0.7);
+
+	$pdf->AddPage();
+
+	$html = '';
 
 	foreach ($invoices as $invoice => $value) {
-		pred($invoice);
-		pred($value);
+		$html .= 'split';
+		$html .= 'Sælger:<br>';
+		$html .= '<strong>'.$value['owner_site_name'].'</strong><br>';
+		$html .= $value['site_address'].'<br>';
+		$html .= 'DK-'.$value['site_postcode'].' '.$value['site_city'].'<br>';
+		$html .= $value['site_company_name'].'<br>';
+		$html .= 'CVR: '.$value['site_company_vat'].'<br><br>';
+		$html .= 'Køber:<br>';
+		if (!empty($value['billing_address']['company'])) {
+			$html .= '<strong>'.$value['billing_address']['company'].'</strong><br>';
+		}
+		$html .= $value['billing_address']['first_name'].' '.$value['billing_address']['last_name'].'<br>';
+		$html .= $value['billing_address']['address_1'].'<br>';
+		$html .= $value['billing_address']['postcode'].' '.$value['billing_address']['city'].'<br>';
+		if ($value['billing_address']['country'] == 'DK') {
+			$html .= 'Danmark';
+		} else {
+			$html .= $value['billing_address']['country'];
+		}
+		$html .= 'break';
+		$html .= '<br><strong>Faktura</strong><br>';
+		$html .= 'Fakturadato<br>';
+		$html .= 'Ordrebeløb ('.$value['currency'].')<br>';
+		$html .= 'break';
+		$html .= '<strong>'.$value['invoice_id'].'</strong><br>';
+		$html .= explode(' ', $value['order_created_at'])[0].'<br>';
+		$html .= number_format($value['total'], 2, ',', '.');
+		$html .= 'break';
+		$html .= '
+		<table>
+			<thead>
+				<tr>
+					<th width="31%" style="border-bottom: 1px solid grey;"><strong>Navn</strong></th>
+					<th width="23%" align="right" style="border-bottom: 1px solid grey;"><strong>Pris</strong></th>
+					<th width="23%" align="right" style="border-bottom: 1px solid grey;"><strong>Mængde</strong></th>
+					<th width="23%" align="right" style="border-bottom: 1px solid grey;"><strong>Linje total</strong></th>
+				</tr>
+				<tr>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+			</thead><tbody>';
+			if(!empty($value['line_items']) && $value['line_items'] != '') {
+				foreach($value['line_items'] as $item) {
+					$html .= '<tr><td width="31%">'.$item['name'];
+						if(!empty($item['meta']) && $item['meta'] != '') {
+							foreach($item['meta'] as $variation){
+								$html .= '<br><span style="color: #e2e2e2;"> - '.$variation['label'].': '.$variation['value'].'</span>';
+							}
+						}
+						$html .= '</td>
+						<td width="23%" align="right">'.number_format(($item['total']+$item['total_tax'])/$item['quantity'], 2, ',', '.').'</td>
+						<td width="23%" align="right">'.$item['quantity'].'</td>
+						<td width="23%" align="right">'.number_format($item['total']+$item['total_tax'], 2, ',', '.').'</td>
+					</tr>';
+				}
+			}
+		$html .= '<tr>
+					<td style="border-bottom: 2px solid grey;"></td>
+					<td style="border-bottom: 2px solid grey;"></td>
+					<td style="border-bottom: 2px solid grey;"></td>
+					<td style="border-bottom: 2px solid grey;"></td>
+				</tr>
+				</tbody></table>';
+
+		$fee = 0; $fee_tax = 0;
+
+		if (!empty($value['fee_lines']) && $value['fee_lines'] != '') {
+			foreach ($value['fee_lines'] as $line) {
+				$fee += $line['total'];
+				$fee_tax += $line['total_tax'];
+			}
+		}
+
+		$subtotal = $value['subtotal']-$value['total_discount'];
+
+		$total_fee = $fee+$fee_tax;
+
+		$difference = round($value['total'] - ($subtotal + $value['total_shipping'] + $fee + $value['total_tax']), 2, PHP_ROUND_HALF_UP);
+
+		if ($subtotal != 0 && $difference != 0 && $difference != -0 && $difference != '0' && $difference != '-0') {
+			$subtotal = $subtotal + $difference;
+		}
+
+		$html .= 'break';
+		$html .= '<table>
+			<tr>
+				<td>Subtotal</td>
+				<td align="right">'.number_format($value['subtotal']+$value['total_tax']-($fee_tax+$value['shipping_tax']), 2, ',', '.').'</td>
+			</tr>
+			<tr>
+				<td>Rabat</td>
+				<td align="right">'.number_format($value['total_discount'], 2, ',', '.').'</td>
+			</tr>
+			<tr>
+				<td>Fragt</td>
+				<td align="right">'.number_format($value['total_shipping']+$value['shipping_tax'], 2, ',', '.').'</td>
+			</tr>
+			<tr>
+				<td>Gebyr</td>
+				<td align="right">'.number_format($total_fee, 2, ',', '.').'</td>
+			</tr>
+			<tr><td></td><td></td></tr>
+			<tr>
+				<td><strong>Total</strong></td>
+				<td align="right"><strong>'.number_format($value['total'], 2, ',', '.').'</strong></td>
+			</tr>
+			<tr><td></td><td></td></tr>
+			<tr>
+				<td>Moms (25 %)</td>
+				<td align="right">'.number_format($value['total_tax'], 2, ',', '.').'</td>
+			</tr>
+			<tr>
+				<td>Total ekskl. moms</td>
+				<td align="right">'.number_format($value['subtotal'], 2, ',', '.').'</td>
+			</tr>
+		</table>';
+		$html .= 'break';
+		$html .= $value['site_company_name'].'<br>';
+		$html .= 'CVR: '.$value['site_company_vat'].'<br><br>';
+		$html .= $value['site_address'].'<br>';
+		$html .= 'DK-'.$value['site_postcode'].' '.$value['site_city'].'<br><br>';
+		$html .= 'Alle priser i '.$value['currency'];
 	}
+
+	$delimiter = 'split';
+	$chunks    = explode($delimiter, $html);
+	$cnt       = count($chunks);
+
+	for ($i = 1; $i < $cnt; $i++) {
+		$y = $pdf->getY();
+
+		$pdf->SetFont('helvetica', '', 10, '', true);
+		$pdf->SetTextColor(0, 0, 0, 95); 
+		$sections = explode('break', $chunks[$i]);
+
+		$sale_and_buyer = $sections[0];
+		$details = $sections[1];
+		$details_2 = $sections[2];
+		$line_items = $sections[3];
+		$totals = $sections[4];
+		$footer = $sections[5];
+
+		$pdf->writeHTMLCell('', 100, '', $y, $sale_and_buyer, 0, 0, 0, true, 'L', true);
+		$pdf->MultiCell('', '', $details, 0, 'L', false, 1, 110, 50, true, 0, true, true, 0, 'B', false);
+		$pdf->MultiCell('', '', $details_2, 0, 'R', false, 1, 110, 50, true, 0, true, true, 0, 'B', false);
+
+		$pdf->Ln(5);
+
+		$pdf->SetFont('helvetica', '', 12, '', true);
+		$pdf->SetTextColor(0, 0, 0, 100);
+
+		$y = $pdf->getY();
+		$x = $pdf->getX();
+
+		$pdf->MultiCell('', '', $line_items, 0, 'L', false, 1, $x, $y, true, 0, true, true, 0, 'T', false);
+		$pdf->Ln(3);
+
+		$y = $pdf->getY();
+
+		$pdf->MultiCell('', '', $totals, 0, 'L', false, 1, 110, $y, true, 0, true, true, 0, 'T', false);
+
+		$pdf->Ln(3);
+
+		$y = $pdf->getY();
+		$pdf->SetFont('helvetica', '', 10, '', true);
+
+		$linestyle = array('width' => 0.1, 'cap' => 'butt', 'join' => 'miter', 'dash' => '', 'phase' => 0, 'color' => array(0, 0, 0));
+
+		$pdf->Line($x, $y+4, 195, $y+4, $linestyle);
+
+		$pdf->MultiCell('', '', $footer, 0, 'C', false, 1, $x, $y+4, true, 0, true, true, 0, 'T', false);
+
+		if ($i < $cnt - 1) {
+			$pdf->AddPage();
+		}
+	}
+
+	$pdf->lastPage();
+
+	$pdf->Output('fakturaer.pdf', 'I');
 
 	exit;
 }
@@ -1263,7 +1518,7 @@ function sort_orders_by_year($orders){
 
 function array_assoc_reverse(array $arr){
 	return array_combine( array_reverse(array_keys( $arr )), array_reverse( array_values( $arr ) ) );
-}
+} 
 
 function closestDate($day){
 	$day = ucfirst($day);

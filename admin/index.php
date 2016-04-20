@@ -6,15 +6,36 @@ require '../app/init.php';
 
 
 if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-	header('Location: '.BASE_URL);
+
+	if (isset($_POST['login-submit'])) {
+		$login = login($_POST['email'], $_POST['password']);
+		if (!$login) {
+			$message = message('E-mail eller password er forkert!', 'danger', true);
+		}
+
+		header('Location: '.BASE_URL.'/admin/');
+		exit;
+	}
+
+	require '../templates/header.php';
+
+	?>
+	<?php echo $message; ?>
+	<div class="jumbotron">
+		<h1>Ulvemosens Handelsselskab ApS</h1>
+		<h3>- Administrationsside</h3>
+		<p>Omsætning, fakturaer og andre diverse regnskabsrelaterede opgaver.</p>
+	</div>
+	<?php
+
+	require '../templates/footer.php';
+
 	exit;
-}
+} else { 
 
 require '../templates/admin/header.php';
 
 ?>
-
-
 
 <div class="row">
 	<?php require '../templates/admin/sidebar.php'; ?>
@@ -32,11 +53,7 @@ require '../templates/admin/header.php';
 	</div>
 </div>
 
-
-
 <?php
-
-
 require '../templates/admin/footer.php';
-
+}
 ?>

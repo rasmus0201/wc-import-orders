@@ -26,8 +26,8 @@ if (isset($_POST['this_year'])) {
 	$max_date = date('Y-m-d');
 	$sorting_method = 'day';
 } else if (isset($_POST['this_week'])) {
-	$min_date = date('Y-m-d', strtotime(closestDate('monday')) );
-	$max_date = date('Y-m-d', strtotime(closestDate('sunday'))+86400 );
+	$min_date = date('Y-m-d', strtotime('-6 days'));
+	$max_date = date('Y-m-d', strtotime('1 day'));
 	$sorting_method = 'day';
 } else if (isset($_POST['from_date']) && isset($_POST['to_date'])) {
 	#POST custom date report
@@ -47,12 +47,12 @@ if (isset($_POST['this_year'])) {
 		}
 	} else {
 		$min_date = date('Y-m-d', strtotime('-6 days'));
-		$max_date = date('Y-m-d');
+		$max_date = date('Y-m-d', strtotime('1 day'));
 		$sorting_method = 'day';
 	}
 } else {
-	$min_date = date('Y-m-d', strtotime(closestDate('monday')) );
-	$max_date = date('Y-m-d', strtotime(closestDate('sunday'))+86400 );
+	$min_date = date('Y-m-d', strtotime('-6 days'));
+	$max_date = date('Y-m-d', strtotime('1 day'));
 	$sorting_method = 'day';
 }
 
@@ -91,7 +91,7 @@ require '../templates/admin/header.php';
 					</div>
 					<div class="btn-group" role="group" id="reports_btn_group_2">
 						<input class="btn btn-default" type="submit" name="last_week" value="Sidste uge">
-						<input class="btn btn-default" type="submit" name="this_week" value="Denne uge">
+						<input class="btn btn-default" type="submit" name="this_week" value="Sidste 7 dage">
 					</div>
 				</div>
 				<div class="form-group">

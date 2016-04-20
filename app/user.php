@@ -10,7 +10,6 @@ function login($email, $password){
 	global $db;
 	$bcrypt = new Bcrypt(12);
 
-	//$hash = $bcrypt->hash($password);
 	$result = get_user_by_email($email);
 	if (!$result) {
 		return false;
@@ -371,7 +370,6 @@ class Bcrypt {
 	}
 
 	private function encodeBytes($input) {
-		// The following is code from the PHP Password Hashing Framework
 		$itoa64 = './ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 		$output = '';

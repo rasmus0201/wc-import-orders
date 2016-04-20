@@ -65,14 +65,18 @@ if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 	$discount = (isset($_POST['discount'])) ? $_POST['discount'] : [] ;
 	$total_discount = (isset($_POST['total_discount'])) ? $_POST['total_discount'] : 0 ;
 
-	$result = add_order($product, $shipping, $fee, $discount, $billing_details, $shipping_details, $_POST['currency'], $_POST['status'], $_POST['order_created_at'], $_POST['order_updated_at'], $_POST['order_completed_at'], $_POST['payment'], $_POST['is_paid'], $_POST['note']/*, $_POST['total_line_items'], $_POST['subtotal'], $_POST['total_price'], $_POST['total_tax'], $total_discount*/);
+	if (!empty($product)) {
+		$result = add_order($product, $shipping, $fee, $discount, $billing_details, $shipping_details, $_POST['currency'], $_POST['status'], $_POST['order_created_at'], $_POST['order_updated_at'], $_POST['order_completed_at'], $_POST['payment'], $_POST['is_paid'], $_POST['note']);
 
-	if ($result === true) {
-		header('Location: '.BASE_URL.'/admin/orders.php?invoice_id='.$_POST['invoice_id'].'&action=view');
-		exit;
-	} else {
-		//$message = message('Noget gik galt, prøv igen.', 'danger');
+		if ($result === true) {
+			header('Location: '.BASE_URL.'/admin/orders.php?invoice_id='.$_POST['invoice_id'].'&action=view');
+			exit;
+		} else {
+			$message = message('Noget gik galt, prøv igen.', 'danger');
+		}
 	}
+
+	$message = message('Du skal tilføje min. 1 produkt.', 'danger');
 }
 
 $is_action = false;
@@ -145,8 +149,8 @@ if (isset($_GET['action'])){
 				} else if ($_GET['action'] == 'export_pdf') {
 					$action = 'view';
 					$is_action = true;
-					$message = message('.pdf eksport-funktionen kommer snart!', 'danger');
-					//Generate pdf + download and then header to current order
+					$invoice = array('invoice_'.$invoice_id => 'on');
+					download_pdf_orders_by_ids($invoice);
 				}
 			}
 		} else {
@@ -156,7 +160,7 @@ if (isset($_GET['action'])){
 		$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
 	}
 } else {
-	$orders = get_orders();
+	$orders = get_order_for_table();
 }
 
 require '../templates/admin/header.php';
@@ -166,18 +170,7 @@ require '../templates/admin/header.php';
 <div class="row">
 	<?php require '../templates/admin/sidebar.php'; ?>
 	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-		<?php echo $message; /*pred($result); pred(get_order_by_invoice_id($_GET['invoice_id'])); */?>
-		<?php 
-		/*$r_orders = array_reverse($orders);
-		foreach ($r_orders as $order => $value) {
-			if (isset($value['fee_lines'][0])) {
-				if ($value['fee_lines'][0]['total_tax'] != '0.00') {
-					pred($value['invoice_id']);
-					pred($value['fee_lines']);
-				}
-			}
-		}*/
-		?>
+		<?php echo $message; ?>
 		<?php if($is_action): ?>
 			<?php if($is_action === true): ?>
 				<?php if($action == 'pull'): ?>
@@ -226,7 +219,7 @@ require '../templates/admin/header.php';
 						$url = $db_settings['base_url'];
 					?>
 					<form method="post" class="form-horizontal">
-						<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Tilføj<span class="pull-right"><input class="btn btn-primary" type="submit" name="add_order" value="Tilføj ordre"></span></h1>
+						<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Tilføj</h1>
 						<div class="row">
 							<div class="col-sm-12"><h3>Ordredetaljer</h3></div>
 							<div class="col-sm-6">
@@ -489,7 +482,6 @@ require '../templates/admin/header.php';
 							</div>
 						</div>
 					</form>
-					<?php #echo message('Denne funktion kommer snart! <a class="alert-link" href="'.BASE_URL.'/'.$global['current_url'].'">Tilbage?</a>', 'info', false); ?>
 				<?php elseif($action == 'view'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Vis</h1>
 					<div class="row">
@@ -755,10 +747,6 @@ require '../templates/admin/header.php';
 								</table>
 							</div>
 						</div>
-						<?php /* We have taken care of this difference!
-						<div class="col-sm-12">
-							<?php echo message('Ordreren kan have en difference på 1 øre, grundet afrunding. Dette er dog udlignet i eksport-funktionerne.', 'info', false); ?>
-						</div> */ ?>
 					</div>
 				<?php elseif($action == 'edit'): ?>
 					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Rediger</h1>

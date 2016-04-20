@@ -18,42 +18,6 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 
 	$fields = 'id,order_number,created_at,updated_at,completed_at,status,currency,total,subtotal,total_line_items_quantity,total_tax,total_shipping,cart_tax,shipping_tax,total_discount,shipping_methods,payment_details,billing_address,shipping_address,note,customer_ip,customer_id,view_order_url,line_items,shipping_lines,tax_lines,fee_lines,coupon_lines';
 
-	/*if ($min_date['m'] < 10) {
-		$min_date['m'] = '0'.$min_date['m'];
-	}
-	if ($min_date['d'] < 10) {
-		$min_date['d'] = '0'.$min_date['d'];
-	}
-	if ($min_date['h'] < 10) {
-		$min_date['h'] = '0'.$min_date['h'];
-	}
-	if ($min_date['i'] < 10) {
-		$min_date['i'] = '0'.$min_date['i'];
-	}
-	if ($min_date['s'] < 10) {
-		$min_date['s'] = '0'.$min_date['s'];
-	}
-
-	if (empty($max_date) || $max_date == '' || $max_date == 0) {
-		$max_date = false;
-	} else {
-		if ($max_date['m'] < 10) {
-			$max_date['m'] = '0'.$max_date['m'];
-		}
-		if ($max_date['d'] < 10) {
-			$max_date['d'] = '0'.$max_date['d'];
-		}
-		if ($max_date['h'] < 10) {
-			$max_date['h'] = '0'.$max_date['h'];
-		}
-		if ($max_date['i'] < 10) {
-			$max_date['i'] = '0'.$max_date['i'];
-		}
-		if ($max_date['s'] < 10) {
-			$max_date['s'] = '0'.$max_date['s'];
-		}
-	}*/
-
 	try {
 		$client = new WC_API_Client( $site, $ck, $cs, $options );
 
@@ -79,23 +43,11 @@ function get_new_orders($site, $ck, $cs, $min_date, $max_date, $limit){
 
 		return json_encode(json_decode($res->http->response->body));
 
-		//print_r( $client->orders->get( $order_id ) );
-		//print_r( $client->orders->update_status( $order_id, 'pending' ) );
-		// order refunds
-			//print_r( $client->order_refunds->get( $order_id ) );
-			//print_r( $client->order_refunds->get( $order_id, $refund_id ) );
-			//print_r( $client->order_refunds->create( $order_id, array( 'amount' => 1.00, 'reason' => 'cancellation' ) ) );
-			//print_r( $client->order_refunds->update( $order_id, $refund_id, array( 'reason' => 'who knows' ) ) );
-			//print_r( $client->order_refunds->delete( $order_id, $refund_id ) );
-
 	} catch ( WC_API_Client_Exception $e ) {
-		//echo json_encode($e->getMessage() . PHP_EOL);
 		if ( $e instanceof WC_API_Client_HTTP_Exception ) {
-			//echo json_encode($e->get_request());
 			echo json_encode($e->get_response());
 		}
 
-		//echo $e->getCode();
 		return false;
 	}
 }
@@ -168,22 +120,6 @@ function add_orders(array $orders){
 		$shipping_difference = 0;
 		$subtotal_difference = 0;
 		$total_difference = 0;
-
-		/*
-		Not using this, becuase data is not sufficient and accurate!
-		if (!empty($value['fee_lines']) && $value['fee_lines'] != '') {
-			foreach ($value['fee_lines'] as $line) {
-				$fee = (float)$fee+$line['total'];
-				$fee = (float)$fee+$line['total_tax'];
-			}
-		}
-
-		if (!empty($value['shipping_lines']) && $value['shipping_lines'] != '') {
-			foreach ($value['shipping_lines'] as $line) {
-				$shipping_total = (float)$shipping_total+$line['total'];
-				$shipping_total = (float)$shipping_total+$line['shipping_tax'];
-			}
-		}*/
 
 		if (isset($value['fee_lines'][0])) {
 			$fee = (float)$value['fee_lines'][0]['total']+$value['fee_lines'][0]['total_tax'];
@@ -275,7 +211,11 @@ function add_orders(array $orders){
 		$sth->bindParam(':coupon_lines', $coupon_lines);
 		$sth->bindParam(':export_csv', $export_csv);
 
-		$sth->execute();
+		$res = $sth->execute();
+
+		if (!$res) {
+			return false;
+		}
 
 		$_SESSION['orders_count'] = $_SESSION['orders_count'] + 1;
 	}
@@ -302,7 +242,7 @@ function add_invoices(array $orders){
 
 	foreach ($orders as $order => $value) {
 		$value['invoice_id'] = (int)$next_invoice;
-		$orders['order_'.$value['id']] = $value;
+		$orders['site_'.$value['owner_site_id'].'-order_'.$value['id']] = $value;
 
 		$sth = $db->prepare($sql);
 
@@ -312,7 +252,11 @@ function add_invoices(array $orders){
 		$sth->bindParam(':owner_site_name', $value['owner_site_name']);
 		$sth->bindParam(':order_id', $value['id']);
 
-		$sth->execute();
+		$res = $sth->execute();
+
+		if (!$res) {
+			return false;
+		}
 
 		$next_invoice = $next_invoice + 1;
 		$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
@@ -326,6 +270,8 @@ function add_invoices(array $orders){
 function WCApiAddOrdersAndInvoices($sites, $orders, $min_date, $max_date, $limit, $return_only_new_orders = true){
 	global $db;
 	$error = '';
+	$new_orders = '';
+	$order_buffer = array();
 	foreach ($sites as $site => $val) {
 		$new_orders = get_new_orders($val['url'], $val['consumer_key'], $val['consumer_secret'], $min_date, $max_date, $limit);
 
@@ -339,46 +285,42 @@ function WCApiAddOrdersAndInvoices($sites, $orders, $min_date, $max_date, $limit
 			$new_orders = array_assoc_reverse($new_orders);
 
 			foreach ($new_orders as $new_order => $new_order_val) {
-				//$orders[$site]['order_'.$new_order_val['id']] = $new_order_val; // Merge instead
-				$new_orders['order_'.$new_order_val['id']] = $new_order_val;
+				$new_orders['site_'.$val['id'].'-order_'.$new_order_val['id']] = $new_order_val;
 				$new_orders[$new_order] = [];
 				unset($new_orders[$new_order]);
 
-				$new_orders['order_'.$new_order_val['id']]['owner_site_id'] = $val['id'];
-				$new_orders['order_'.$new_order_val['id']]['owner_site_url'] = $val['url'];
-				$new_orders['order_'.$new_order_val['id']]['owner_site_name'] = $val['name'];
-
 				$key_id = $new_order_val['id'].'_'.$site;
 
-				if ( array_key_exists($key_id, $orders) ) { //isset($orders[$key_id]) 
-					unset($new_orders['order_'.$new_order_val['id']]);
+				if ( array_key_exists($key_id, $orders) ) { 
+					unset($new_orders['site_'.$val['id'].'-order_'.$new_order_val['id']]);
+				} else {
+					$order_buffer['site_'.$val['id'].'-order_'.$new_order_val['id']] = $new_order_val;
+					$order_buffer['site_'.$val['id'].'-order_'.$new_order_val['id']]['owner_site_id'] = $val['id'];
+					$order_buffer['site_'.$val['id'].'-order_'.$new_order_val['id']]['owner_site_url'] = $val['url'];
+					$order_buffer['site_'.$val['id'].'-order_'.$new_order_val['id']]['owner_site_name'] = $val['name'];
+
+					$orders[$new_order_val['id'].'_'.$site] = $new_order_val;
 				}
 			}
-
-			$res = add_invoices($new_orders);
-
-			if ($res === false) {
-				#Error
-				$error .= message('Ordrer eksisterer allerede.', 'danger');
-			}
-
-			$res_2 = add_orders($res);
-
-			if ($res_2 === false) {
-				#Error
-				$error .= message('Ordrer eksisterer allerede.', 'danger');
-			}
-
-			$orders_for_site = $orders;
-
-			unset($orders);
-
-			$orders = array_merge($orders_for_site, $new_orders);
 		}
 	}
 
-	if (!empty($new_orders) && !is_null($new_orders)) {
-		krsort($orders);
+	$sort = array();
+
+	foreach ($order_buffer as $key => $part) {
+		$sort[$key] = strtotime($part['created_at']);
+	}
+
+	array_multisort($sort, SORT_ASC, $order_buffer);
+
+	$res = add_invoices($order_buffer);
+	if ($res === false) {
+		$error .= message('Ordre(r) eksisterer allerede. Kun nogle, eller ingen blev importeret.', 'danger');
+	}
+
+	$res_2 = add_orders($res);
+	if ($res_2 === false) {
+		$error .= message('Ordre(r) eksisterer allerede. Kun nogle, eller ingen blev importeret.', 'danger');
 	}
 
 	$sth = $db->prepare("UPDATE `settings` SET `setting_value` = NOW() WHERE `setting_name` = 'last_pull_date' ");
@@ -390,7 +332,11 @@ function WCApiAddOrdersAndInvoices($sites, $orders, $min_date, $max_date, $limit
 	}
 
 	if ($return_only_new_orders) {
-		return $new_orders;
+		return $order_buffer;
+	}
+
+	if (!empty($orders) && !is_null($orders)) {
+		krsort($orders);
 	}
 
 	return $orders;
