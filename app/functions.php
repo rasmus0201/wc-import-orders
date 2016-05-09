@@ -468,9 +468,9 @@ function get_settings(){
 	return $settings;
 }
 
-function get_order_for_table(){
+function get_orders_for_table(){
 	global $db;
-	$sth = $db->prepare("SELECT invoice_id, order_id, owner_site_id, owner_site_url, owner_site_name, billing_address FROM orders");
+	$sth = $db->prepare("SELECT id, invoice_id, order_id, owner_site_id, owner_site_url, owner_site_name, billing_address FROM orders");
 	$sth->execute();
 	$results = $sth->fetchAll(PDO::FETCH_ASSOC);
 
@@ -487,12 +487,12 @@ function get_order_for_table(){
 	return $results;
 }
 
-function add_order($products, $shippings, $fees, $discounts, $billing_details, $shipping_details, $currency, $status, $order_created_at, $order_updated_at, $order_completed_at, $payment_method, $is_paid, $note){
+function add_order($products, $shippings, $fees, $discounts, $billing_details, $shipping_details, $currency, $status, $order_created_at, $order_updated_at, $order_completed_at, $payment_method, $is_paid, $note, $proforma_text){
 	global $db, $db_settings;
 	$next_invoice = get_setting('next_invoice');
 	$internal_order_id = get_setting('next_internal_order_id');
 	$url = $db_settings['base_url'];
-	$site_name = 'Ulvemosen';
+	$site_name = 'Ulvemosens Handelsselskab ApS';
 	$site_id = 0;
 
 	$total = 0;
@@ -643,9 +643,12 @@ function add_order($products, $shippings, $fees, $discounts, $billing_details, $
 
 	$customer_ip = get_current_user_ip();
 	$customer_id = $_SESSION['user_id'];
-	$view_order_url = BASE_URL.'/admin/orders.php?invoice_id='.$next_invoice.'&action=view';
+	$view_order_url = BASE_URL.'/admin/orders.php?id='.$next_invoice.'&action=view';
 
-	$sth = $db->prepare("INSERT INTO orders (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `order_created_at`, `order_updated_at`, `order_completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`, `updated_at`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name,  :order_id, :order_created_at, :order_updated_at, :order_completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv, NOW(), NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`");
+	$proforma_text = (empty($proforma_text)) ? '' : $proforma_text;
+
+	$sth = $db->prepare("INSERT INTO orders (`invoice_id`, `owner_site_id`, `owner_site_url`, `owner_site_name`, `order_id`, `order_created_at`, `order_updated_at`, `order_completed_at`, `status`, `currency`, `total`, `subtotal`, `total_tax`, `total_shipping`, `shipping_tax`, `cart_tax`, `total_discount`, `shipping_methods`, `payment_details`, `billing_address`, `shipping_address`, `total_line_items_quantity`, `note`, `customer_ip`, `customer_id`, `view_order_url`, `line_items`, `shipping_lines`, `tax_lines`, `fee_lines`, `coupon_lines`, `export_csv`, `proforma_text`, `updated_at`, `created_at`) VALUES (:invoice_id, :owner_site_id, :owner_site_url, :owner_site_name,  :order_id, :order_created_at, :order_updated_at, :order_completed_at, :status, :currency, :total, :subtotal, :total_tax, :total_shipping, :shipping_tax, :cart_tax, :total_discount, :shipping_methods, :payment_details, :billing_address, :shipping_address, :total_line_items_quantity, :note, :customer_ip, :customer_id, :view_order_url, :line_items, :shipping_lines, :tax_lines, :fee_lines, :coupon_lines, :export_csv, :proforma_text, NOW(), NOW()) ON DUPLICATE KEY UPDATE `order_id` = `order_id`");
+
 	$sth->bindParam(':invoice_id', $next_invoice);
 	$sth->bindParam(':owner_site_id', $site_id);
 	$sth->bindParam(':owner_site_url', $url);
@@ -678,30 +681,36 @@ function add_order($products, $shippings, $fees, $discounts, $billing_details, $
 	$sth->bindParam(':fee_lines', $fee_lines);
 	$sth->bindParam(':coupon_lines', $coupon_lines);
 	$sth->bindParam(':export_csv', $export_csv);
+	$sth->bindParam(':proforma_text', $proforma_text);
 
 	$res = $sth->execute();
 
 	if ($res) {
-		$_SESSION['orders_count'] = $_SESSION['orders_count'] + 1;
+		if ($status != 'proforma') {
+			
+			$sth = $db->prepare("INSERT INTO invoices SET invoice_id = :invoice_id, owner_site_id = :owner_site_id, owner_site_url = :owner_site_url, owner_site_name = :owner_site_name, order_id = :order_id, created_at = NOW()");
+			$sth->bindParam(':invoice_id', $next_invoice);
+			$sth->bindParam(':owner_site_id', $site_id);
+			$sth->bindParam(':owner_site_url', $url);
+			$sth->bindParam(':owner_site_name', $site_name);
+			$sth->bindParam(':order_id', $internal_order_id);
 
-		$sth = $db->prepare("INSERT INTO invoices SET invoice_id = :invoice_id, owner_site_id = :owner_site_id, owner_site_url = :owner_site_url, owner_site_name = :owner_site_name, order_id = :order_id, created_at = NOW()");
-		$sth->bindParam(':invoice_id', $next_invoice);
-		$sth->bindParam(':owner_site_id', $site_id);
-		$sth->bindParam(':owner_site_url', $url);
-		$sth->bindParam(':owner_site_name', $site_name);
-		$sth->bindParam(':order_id', $internal_order_id);
+			$res = $sth->execute();
 
-		$res = $sth->execute();
+			update_setting('next_internal_order_id', $internal_order_id+1);
+			update_setting('next_invoice', $next_invoice+1);
 
-		update_setting('next_internal_order_id', $internal_order_id+1);
-		update_setting('next_invoice', $next_invoice+1);
+			if ($res) {
+				$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
+				return true;
+			}
 
-		if ($res) {
-			$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
-			return true;
+			return false;
 		}
+		$_SESSION['orders_count'] = $_SESSION['orders_count'] + 1;
+		update_setting('next_internal_order_id', $internal_order_id+1);
 
-		return false;
+		return true;
 	}
 
 	return false;
@@ -802,15 +811,17 @@ function download_csv_orders_by_ids($orders, $export_bulk = false){
 	global $db, $global;
 
 	$csv = '';
+	$status = 'proforma';
 
 	if ($export_bulk) {
-		$sql = "SELECT export_csv FROM orders WHERE invoice_id >= :min_id AND invoice_id <= :max_id";
+		$sql = "SELECT export_csv FROM orders WHERE id >= :min_id AND id <= :max_id AND status != :status";
 		$min_id = explode('-', $orders)[0];
 		$max_id = explode('-', $orders)[1];
 
 		$sth = $db->prepare($sql);
 		$sth->bindParam(':min_id', $min_id);
 		$sth->bindParam(':max_id', $max_id);
+		$sth->bindParam(':status', $status);
 		$sth->execute();
 
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
@@ -824,13 +835,13 @@ function download_csv_orders_by_ids($orders, $export_bulk = false){
 			}
 		}
 	} else {
-		$sql = "SELECT export_csv FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+		$sql = "SELECT export_csv FROM orders WHERE id = :id LIMIT 1";
 
 		foreach ($orders as $order => $value) {
 			if ($value == 'on') {
-				$invoice_id = explode('_', $order)[1];
+				$id = explode('_', $order)[1];
 				$sth = $db->prepare($sql);
-				$sth->bindParam(':invoice_id', $invoice_id);
+				$sth->bindParam(':id', $id);
 
 				$sth->execute();
 
@@ -874,26 +885,28 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 	}
 	global $db, $global;
 
-	$sql = "SELECT * FROM orders WHERE invoice_id = :invoice_id LIMIT 1";
+	$sql = "SELECT * FROM orders WHERE id = :id LIMIT 1";
 	$sql_2 = "SELECT * FROM sites WHERE id = :owner_site_id LIMIT 1";
 
 	$invoices = '';
+	$status = 'proforma';
 
 	if ($export_bulk) {
-		$sql = "SELECT * FROM orders WHERE invoice_id >= :min_id AND invoice_id <= :max_id";
+		$sql = "SELECT * FROM orders WHERE id >= :min_id AND id <= :max_id AND status != :status";
 		$min_id = explode('-', $orders)[0];
 		$max_id = explode('-', $orders)[1];
 
 		$sth = $db->prepare($sql);
 		$sth->bindParam(':min_id', $min_id);
 		$sth->bindParam(':max_id', $max_id);
+		$sth->bindParam(':status', $status);
 		$res = $sth->execute();
 
 		$results = $sth->fetchAll(PDO::FETCH_ASSOC);
 
 		if ($res) {
 			foreach ($results as $result => $value) {
-				$invoice_id = $value['invoice_id'];
+				$id = $value['id'];
 
 				$sth = $db->prepare($sql_2);
 				$sth->bindParam(':owner_site_id', $value['owner_site_id']);
@@ -902,23 +915,24 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 
 				$result_2 = $sth->fetch(PDO::FETCH_ASSOC);
 
-				$invoices['invoice_'.$invoice_id] = $value;
-				$invoices['invoice_'.$invoice_id]['site_address'] = $result_2['address'];
-				$invoices['invoice_'.$invoice_id]['site_postcode'] = $result_2['postcode'];
-				$invoices['invoice_'.$invoice_id]['site_city'] = $result_2['city'];
-				$invoices['invoice_'.$invoice_id]['site_company_name'] = $result_2['company_name'];
-				$invoices['invoice_'.$invoice_id]['site_company_vat'] = $result_2['company_vat'];
-				$invoices['invoice_'.$invoice_id]['site_company_logo_url'] = $result_2['company_logo_url'];
+				$invoices['invoice_'.$id] = $value;
+				$invoices['invoice_'.$id]['site_address'] = $result_2['address'];
+				$invoices['invoice_'.$id]['site_postcode'] = $result_2['postcode'];
+				$invoices['invoice_'.$id]['site_city'] = $result_2['city'];
+				$invoices['invoice_'.$id]['site_company_name'] = $result_2['company_name'];
+				$invoices['invoice_'.$id]['site_company_vat'] = $result_2['company_vat'];
+				$invoices['invoice_'.$id]['site_company_logo_url'] = $result_2['company_logo_url'];
 
-				$invoices['invoice_'.$invoice_id]['shipping_methods'] = json_decode($value['shipping_methods'], 1);
-				$invoices['invoice_'.$invoice_id]['payment_details'] = json_decode($value['payment_details'], 1);
-				$invoices['invoice_'.$invoice_id]['billing_address'] = json_decode($value['billing_address'], 1);
-				$invoices['invoice_'.$invoice_id]['shipping_address'] = json_decode($value['shipping_address'], 1);
-				$invoices['invoice_'.$invoice_id]['line_items'] = json_decode($value['line_items'], 1);
-				$invoices['invoice_'.$invoice_id]['shipping_lines'] = json_decode($value['shipping_lines'], 1);
-				$invoices['invoice_'.$invoice_id]['tax_lines'] = json_decode($value['tax_lines'], 1);
-				$invoices['invoice_'.$invoice_id]['fee_lines'] = json_decode($value['fee_lines'], 1);
-				$invoices['invoice_'.$invoice_id]['coupon_lines'] = json_decode($value['coupon_lines'], 1);
+				$invoices['invoice_'.$id]['shipping_methods'] = json_decode($value['shipping_methods'], 1);
+				$invoices['invoice_'.$id]['payment_details'] = json_decode($value['payment_details'], 1);
+				$invoices['invoice_'.$id]['billing_address'] = json_decode($value['billing_address'], 1);
+				$invoices['invoice_'.$id]['shipping_address'] = json_decode($value['shipping_address'], 1);
+				$invoices['invoice_'.$id]['line_items'] = json_decode($value['line_items'], 1);
+				$invoices['invoice_'.$id]['shipping_lines'] = json_decode($value['shipping_lines'], 1);
+				$invoices['invoice_'.$id]['tax_lines'] = json_decode($value['tax_lines'], 1);
+				$invoices['invoice_'.$id]['fee_lines'] = json_decode($value['fee_lines'], 1);
+				$invoices['invoice_'.$id]['coupon_lines'] = json_decode($value['coupon_lines'], 1);
+				$invoices['invoice_'.$id]['proforma_text'] = $result['proforma_text'];
 
 				unset($result_2);
 			}
@@ -929,9 +943,9 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 	} else {
 		foreach ($orders as $order => $value) {
 			if ($value == 'on') {
-				$invoice_id = explode('_', $order)[1];
+				$id = explode('_', $order)[1];
 				$sth = $db->prepare($sql);
-				$sth->bindParam(':invoice_id', $invoice_id);
+				$sth->bindParam(':id', $id);
 
 				$sth->execute();
 
@@ -945,23 +959,24 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 
 					$result_2 = $sth->fetch(PDO::FETCH_ASSOC);
 
-					$invoices['invoice_'.$invoice_id] = $result;
-					$invoices['invoice_'.$invoice_id]['site_address'] = $result_2['address'];
-					$invoices['invoice_'.$invoice_id]['site_postcode'] = $result_2['postcode'];
-					$invoices['invoice_'.$invoice_id]['site_city'] = $result_2['city'];
-					$invoices['invoice_'.$invoice_id]['site_company_name'] = $result_2['company_name'];
-					$invoices['invoice_'.$invoice_id]['site_company_vat'] = $result_2['company_vat'];
-					$invoices['invoice_'.$invoice_id]['site_company_logo_url'] = $result_2['company_logo_url'];
+					$invoices['invoice_'.$id] = $result;
+					$invoices['invoice_'.$id]['site_address'] = $result_2['address'];
+					$invoices['invoice_'.$id]['site_postcode'] = $result_2['postcode'];
+					$invoices['invoice_'.$id]['site_city'] = $result_2['city'];
+					$invoices['invoice_'.$id]['site_company_name'] = $result_2['company_name'];
+					$invoices['invoice_'.$id]['site_company_vat'] = $result_2['company_vat'];
+					$invoices['invoice_'.$id]['site_company_logo_url'] = $result_2['company_logo_url'];
 
-					$invoices['invoice_'.$invoice_id]['shipping_methods'] = json_decode($result['shipping_methods'], 1);
-					$invoices['invoice_'.$invoice_id]['payment_details'] = json_decode($result['payment_details'], 1);
-					$invoices['invoice_'.$invoice_id]['billing_address'] = json_decode($result['billing_address'], 1);
-					$invoices['invoice_'.$invoice_id]['shipping_address'] = json_decode($result['shipping_address'], 1);
-					$invoices['invoice_'.$invoice_id]['line_items'] = json_decode($result['line_items'], 1);
-					$invoices['invoice_'.$invoice_id]['shipping_lines'] = json_decode($result['shipping_lines'], 1);
-					$invoices['invoice_'.$invoice_id]['tax_lines'] = json_decode($result['tax_lines'], 1);
-					$invoices['invoice_'.$invoice_id]['fee_lines'] = json_decode($result['fee_lines'], 1);
-					$invoices['invoice_'.$invoice_id]['coupon_lines'] = json_decode($result['coupon_lines'], 1);
+					$invoices['invoice_'.$id]['shipping_methods'] = json_decode($result['shipping_methods'], 1);
+					$invoices['invoice_'.$id]['payment_details'] = json_decode($result['payment_details'], 1);
+					$invoices['invoice_'.$id]['billing_address'] = json_decode($result['billing_address'], 1);
+					$invoices['invoice_'.$id]['shipping_address'] = json_decode($result['shipping_address'], 1);
+					$invoices['invoice_'.$id]['line_items'] = json_decode($result['line_items'], 1);
+					$invoices['invoice_'.$id]['shipping_lines'] = json_decode($result['shipping_lines'], 1);
+					$invoices['invoice_'.$id]['tax_lines'] = json_decode($result['tax_lines'], 1);
+					$invoices['invoice_'.$id]['fee_lines'] = json_decode($result['fee_lines'], 1);
+					$invoices['invoice_'.$id]['coupon_lines'] = json_decode($result['coupon_lines'], 1);
+					$invoices['invoice_'.$id]['proforma_text'] = $result['proforma_text'];
 
 					unset($result_2);
 				} else {
@@ -998,6 +1013,12 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 	$html = '';
 
 	foreach ($invoices as $invoice => $value) {
+		$value['owner_site_name'] = (empty($value['owner_site_name'])) ? 'Ulvemosens Handelsselskab ApS' : $value['owner_site_name'];
+		$value['site_address'] = (empty($value['site_address'])) ? 'Ulvemosevej 12' : $value['site_address'];
+		$value['site_postcode'] = (empty($value['site_postcode'])) ? '6800' : $value['site_postcode'];
+		$value['site_city'] = (empty($value['site_city'])) ? 'Varde' : $value['site_city'];
+		$value['site_company_name'] = (empty($value['site_company_name'])) ? 'Ulvemosens Handelsselskab ApS' : $value['site_company_name'];
+		$value['site_company_vat'] = (empty($value['site_company_vat'])) ? '36891475' : $value['site_company_vat'];
 		$html .= 'split';
 		$html .= 'Sælger:<br>';
 		$html .= '<strong>'.$value['owner_site_name'].'</strong><br>';
@@ -1044,16 +1065,16 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 			</thead><tbody>';
 			if(!empty($value['line_items']) && $value['line_items'] != '') {
 				foreach($value['line_items'] as $item) {
-					$html .= '<tr><td width="31%">'.$item['name'];
+					$html .= '<tr><td style="border-bottom: 1px solid rgb(240,240,240);" width="31%">'.$item['name'];
 						if(!empty($item['meta']) && $item['meta'] != '') {
 							foreach($item['meta'] as $variation){
 								$html .= '<br><span style="color: #e2e2e2;"> - '.$variation['label'].': '.$variation['value'].'</span>';
 							}
 						}
 						$html .= '</td>
-						<td width="23%" align="right">'.number_format(($item['total']+$item['total_tax'])/$item['quantity'], 2, ',', '.').'</td>
-						<td width="23%" align="right">'.$item['quantity'].'</td>
-						<td width="23%" align="right">'.number_format($item['total']+$item['total_tax'], 2, ',', '.').'</td>
+						<td style="border-bottom: 1px solid rgb(240,240,240);" width="23%" align="right">'.number_format(($item['total']+$item['total_tax'])/$item['quantity'], 2, ',', '.').'</td>
+						<td style="border-bottom: 1px solid rgb(240,240,240);" width="23%" align="right">'.$item['quantity'].'</td>
+						<td style="border-bottom: 1px solid rgb(240,240,240);" width="23%" align="right">'.number_format($item['total']+$item['total_tax'], 2, ',', '.').'</td>
 					</tr>';
 				}
 			}
@@ -1114,9 +1135,13 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 			</tr>
 			<tr>
 				<td>Total ekskl. moms</td>
-				<td align="right">'.number_format($value['subtotal'], 2, ',', '.').'</td>
+				<td align="right">'.number_format($value['total']-$value['total_tax'], 2, ',', '.').'</td>
 			</tr>
 		</table>';
+		$html .= 'break';
+		if (!empty($value['proforma_text'])) {
+			$html .= '<p>'.nl2br($value['proforma_text']).'</p>';
+		}
 		$html .= 'break';
 		$html .= $value['site_company_name'].'<br>';
 		$html .= 'CVR: '.$value['site_company_vat'].'<br><br>';
@@ -1141,7 +1166,8 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 		$details_2 = $sections[2];
 		$line_items = $sections[3];
 		$totals = $sections[4];
-		$footer = $sections[5];
+		$proforma_text = $sections[5];
+		$footer = $sections[6];
 
 		$pdf->writeHTMLCell('', 100, '', $y, $sale_and_buyer, 0, 0, 0, true, 'L', true);
 		$pdf->MultiCell('', '', $details, 0, 'L', false, 1, 110, 50, true, 0, true, true, 0, 'B', false);
@@ -1161,6 +1187,10 @@ function download_pdf_orders_by_ids($orders, $export_bulk = false){
 		$y = $pdf->getY();
 
 		$pdf->MultiCell('', '', $totals, 0, 'L', false, 1, 110, $y, true, 0, true, true, 0, 'T', false);
+		if(!empty($proforma_text)) {
+			$pdf->MultiCell(90, '', $proforma_text, 0, 'L', false, 1, 15, $y, true, 0, true, true, 0, 'T', false);
+			$pdf->Ln(20);
+		}
 
 		$pdf->Ln(3);
 

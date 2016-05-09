@@ -5,21 +5,22 @@ require '../app/init.php';
 
 
 if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-	header('Location: '.BASE_URL);
+	header('Location: '.ADMIN_URL);
 	exit;
 }
 
 if (isset($_POST['this_year'])) {
-	$min_date = date('Y-m-d', strtotime('-1 year'));
+	$min_date = date('Y-m-d', (strtotime('-11 months')) );
 	$max_date = date('Y-m-d');
 	$sorting_method = 'month';
 } else if (isset($_POST['last_month'])) {
 	$min_date = date('Y-m-d', strtotime('first day of last month'));
-	$max_date = date('Y-m-d', strtotime('last day of last month'));
+	//$max_date = date('Y-m-d', strtotime('last day of last month'));
+	$max_date = date('Y-m-d', strtotime('first day of this month'));
 	$sorting_method = 'day';
 } else if (isset($_POST['last_week'])) {
 	$min_date = date('Y-m-d', strtotime('last week') );
-	$max_date = date('Y-m-d', strtotime(closestDate('monday'))-1 );
+	$max_date = date('Y-m-d', strtotime(closestDate('monday')));
 	$sorting_method = 'day';
 } else if (isset($_POST['this_month'])) {
 	$min_date = date('Y-m-d', strtotime('-31 days'));
@@ -27,7 +28,7 @@ if (isset($_POST['this_year'])) {
 	$sorting_method = 'day';
 } else if (isset($_POST['this_week'])) {
 	$min_date = date('Y-m-d', strtotime('-6 days'));
-	$max_date = date('Y-m-d', strtotime('1 day'));
+	$max_date = date('Y-m-d', strtotime('+1 day'));
 	$sorting_method = 'day';
 } else if (isset($_POST['from_date']) && isset($_POST['to_date'])) {
 	#POST custom date report

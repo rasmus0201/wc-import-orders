@@ -9,6 +9,7 @@ date_default_timezone_set("Europe/Copenhagen");
 session_start();
 
 try {
+	//$db = new PDO('mysql:host=mysql44.unoeuro.com;dbname=ulvemosenshandelsselskab_dk_db;charset=utf8', 'ulvemosensh_dk', 'nvf55pmz');
 	$db = new PDO('mysql:host=localhost;dbname=wc_invoices;charset=utf8', 'root', 'root');
 	$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 	$db->exec("SET NAMES utf8mb4");
@@ -27,10 +28,12 @@ foreach ($db_settings as $setting => $value) {
 }
 
 define('BASE_PATH', $db_settings['base_path']);
+define('ADMIN_PATH', BASE_PATH.'/admin');
 define('TEMPLATES_PATH', BASE_PATH.'/templates');
 define('STATIC_PATH', BASE_PATH.'/static');
 
 define('BASE_URL', $db_settings['base_url']);
+define('ADMIN_URL', BASE_URL.'/admin');
 define('TEMPLATES_URL', BASE_URL.'/templates');
 define('STATIC_URL', BASE_URL.'/static');
 
@@ -59,8 +62,6 @@ $message = '';
 	#Make ready for wc subscriptions
 	#(Edit orders directly)
 
-#Clean up files
-
 # Lines of code wc api = 2539
 # Lines of code by Rasmus = 1962 + 654
 # Lines of code total = 4501 + 654
@@ -70,6 +71,10 @@ $message = '';
 # Lines now = 6181 + 654
 # Lines now = 6579 + 654
 # Lines now = 7259 + 654
-# Lines now = 7769 + 839 = 8608 - 1962 = 6646
+# Lines now = 7769 + 839
+
+# --- Excl. /lib --- #
+# Lines now = 5475 + 839 = 6314
+
 
 # Terminal = find . -name '*.php' | xargs wc -l

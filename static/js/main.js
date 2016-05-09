@@ -89,6 +89,39 @@ $(document).ready(function() {
 		$('#order_updated_at').val(get_current_datetime());
 		$('#order_completed_at').val(get_current_datetime());
 	}
+
+	if ($('.admin-orders').length) {
+		$('#payment_text_row').hide();
+		$('#status').on('change', function(){
+			if ($(this).val() == 'proforma') {
+				$('#payment_text_row').fadeIn();
+				$('#is_paid').val('no');
+			} else {
+				$('#payment_text_row').fadeOut();
+				$('#is_paid').val('yes');
+			}
+		});
+	}
+
+	$('#refund-order').on('click', function(e){
+		e.preventDefault();
+		console.log(this.href);
+		if (confirm('Er du sikker?')) {
+			window.location.href = this.href;
+		}
+	});
+	$('#complete-order').on('click', function(e){
+		e.preventDefault();
+		if (confirm('Er du sikker?')) {
+			window.location.href = this.href;
+		}
+	});
+	$('#delete-order').on('click', function(e){
+		e.preventDefault();
+		if (confirm('Er du sikker?')) {
+			window.location.href = this.href;
+		}
+	});
 });
 
 function calculate_profit() {

@@ -12,8 +12,9 @@ if (!defined('BASE_URL')) {
 	exit;
 }
 
-$current_url = str_replace(BASE_PATH.'/','',$_SERVER["SCRIPT_FILENAME"]);
+$current_url = str_replace(BASE_PATH.'/','',$_SERVER['SCRIPT_FILENAME']);
 $global['current_url'] = $current_url;
+$global['current_url_query'] = $current_url.'?'.$_SERVER['QUERY_STRING'];
 $global['project_name'] = 'Administration';
 
 $titles = [

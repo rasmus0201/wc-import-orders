@@ -61,7 +61,7 @@ function login($email, $password){
 
 function logout(){
 	if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-		header('Location: '.BASE_URL);
+		header('Location: '.ADMIN_URL);
 		exit;
 	}
 	unset($_SESSION['loggedin']);
@@ -76,7 +76,7 @@ function logout(){
 	unset($_SESSION['users_count']);
 	session_destroy();
 
-	header('Location: '.BASE_URL);
+	header('Location: '.ADMIN_URL);
 	exit;
 }
 

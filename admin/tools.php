@@ -3,7 +3,7 @@ require '../app/db.php';
 require '../app/init.php';
 
 if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-	header('Location: '.BASE_URL);
+	header('Location: '.ADMIN_URL);
 	exit;
 }
 

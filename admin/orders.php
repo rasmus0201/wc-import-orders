@@ -66,10 +66,10 @@ if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 	$total_discount = (isset($_POST['total_discount'])) ? $_POST['total_discount'] : 0 ;
 
 	if (!empty($product)) {
-		$result = add_order($product, $shipping, $fee, $discount, $billing_details, $shipping_details, $_POST['currency'], $_POST['status'], $_POST['order_created_at'], $_POST['order_updated_at'], $_POST['order_completed_at'], $_POST['payment'], $_POST['is_paid'], $_POST['note']);
+		$result = add_order($product, $shipping, $fee, $discount, $billing_details, $shipping_details, $_POST['currency'], $_POST['status'], $_POST['order_created_at'], $_POST['order_updated_at'], $_POST['order_completed_at'], $_POST['payment'], $_POST['is_paid'], $_POST['note'], $_POST['proforma_text']);
 
 		if ($result === true) {
-			header('Location: '.BASE_URL.'/admin/orders.php?invoice_id='.$_POST['invoice_id'].'&action=view');
+			header('Location: '.BASE_URL.'/admin/orders.php');
 			exit;
 		} else {
 			$message = message('Noget gik galt, prøv igen.', 'danger');
@@ -81,7 +81,9 @@ if (isset($_POST['pull_orders']) && check_user_abilities_min_admin()) {
 
 $is_action = false;
 
-if (isset($_GET['action'])){
+
+
+if (isset($_GET['action'])) {
 	if (!empty($_GET['action'])){
 		if ($_GET['action'] != 'add' && $_GET['action'] != 'edit' && $_GET['action'] != 'view' && $_GET['action'] != 'pull' && $_GET['action'] != 'export_csv' && $_GET['action'] != 'export_pdf') {
 			header('Location: '.BASE_URL.'/'.$global['current_url']);
@@ -105,12 +107,12 @@ if (isset($_GET['action'])){
 				header('Location: '.BASE_URL.'/'.$global['current_url']);
 				exit;
 			}
-		} else if (isset($_GET['invoice_id'])) {
-			if (!empty($_GET['invoice_id'])) {
-				$invoice_id = $_GET['invoice_id'];
+		} else if (isset($_GET['id'])) {
+			if (!empty($_GET['id'])) {
+				$id = $_GET['id'];
 
-				$sth = $db->prepare("SELECT * FROM orders WHERE invoice_id = :invoice_id LIMIT 1");
-				$sth->bindParam(':invoice_id', $invoice_id);
+				$sth = $db->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
+				$sth->bindParam(':id', $id);
 				$sth->execute();
 
 				$order = $sth->fetch(PDO::FETCH_ASSOC);
@@ -144,14 +146,16 @@ if (isset($_GET['action'])){
 					$is_action = true;
 
 					//Generate csv + download and then header to current order
-					$invoice = array('invoice_'.$invoice_id => 'on');
+					$invoice = array('invoice_'.$id => 'on');
 					download_csv_orders_by_ids($invoice);
 				} else if ($_GET['action'] == 'export_pdf') {
 					$action = 'view';
 					$is_action = true;
-					$invoice = array('invoice_'.$invoice_id => 'on');
+					$invoice = array('invoice_'.$id => 'on');
 					download_pdf_orders_by_ids($invoice);
 				}
+
+				//Download function change by ID instead
 			}
 		} else {
 			$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
@@ -159,8 +163,146 @@ if (isset($_GET['action'])){
 	} else {
 		$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
 	}
+} else if(isset($_GET['status'])) {
+	if (!empty($_GET['status'])){
+		if ($_GET['status'] != 'refund' && $_GET['status'] != 'complete' && $_GET['status'] != 'delete') {
+			header('Location: '.BASE_URL.'/'.$global['current_url_query']);
+			exit;
+		} else {
+			if (!isset($_GET['id']) || empty($_GET['id'])) {
+				header('Location: '.BASE_URL.'/'.$global['current_url_query']);
+				exit;
+			}
+
+			$id = $_GET['id'];
+			$status = 'proforma';
+
+			$sth = $db->prepare("SELECT * FROM orders WHERE id = :id AND status = :status LIMIT 1");
+			$sth->bindParam(':id', $id);
+			$sth->bindParam(':status', $status);
+			$sth->execute();
+
+			$order = $sth->fetch(PDO::FETCH_ASSOC);
+
+			if (!$order) {
+				header('Location: '.BASE_URL.'/'.$global['current_url_query']);
+				exit;
+			} else if (!check_user_abilities_min_admin()) {
+				header('Location: '.BASE_URL.'/'.$global['current_url_query']);
+				exit;
+			}
+
+			if ($_GET['status'] == 'refund') {
+				//Make status refund + is_paid = yes + updated_at + order_completed_at
+				$payment_details = json_decode($order['payment_details']);
+				$payment_details->paid = true;
+				$payment_details = json_encode($payment_details);
+				$next_invoice = get_setting('next_invoice');
+				$status = 'refunded';
+				$site_id = $order['owner_site_id'];
+				$site_url = $order['owner_site_url'];
+				$site_name = $order['owner_site_name'];
+				$internal_order_id = get_setting('next_internal_order_id');
+
+				$sth = $db->prepare("UPDATE orders SET invoice_id = :invoice_id, payment_details = :payment_details, status = :status, order_completed_at = NOW(), order_updated_at = NOW(), updated_at = NOW(), proforma_text = '' WHERE id = :id LIMIT 1");
+				$sth->bindParam(':invoice_id', $next_invoice);
+				$sth->bindParam(':payment_details', $payment_details);
+				$sth->bindParam(':status', $status);
+				$sth->bindParam(':id', $id);
+				$res = $sth->execute();
+
+				if ($res) {
+					//make invoice
+					$sth = $db->prepare("INSERT INTO invoices SET invoice_id = :invoice_id, owner_site_id = :owner_site_id, owner_site_url = :owner_site_url, owner_site_name = :owner_site_name, order_id = :order_id, created_at = NOW()");
+					$sth->bindParam(':invoice_id', $next_invoice);
+					$sth->bindParam(':owner_site_id', $site_id);
+					$sth->bindParam(':owner_site_url', $site_url);
+					$sth->bindParam(':owner_site_name', $site_name);
+					$sth->bindParam(':order_id', $internal_order_id);
+
+					$res = $sth->execute();
+
+					update_setting('next_internal_order_id', $internal_order_id+1);
+					update_setting('next_invoice', $next_invoice+1);
+
+					if ($res) {
+						$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
+
+						header('Location: '.BASE_URL.'/'.$global['current_url'].'?id='.$order['id'].'&action=view');
+						exit;
+					} else {
+						$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+					}
+				} else {
+					$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+				}
+			} else if ($_GET['status'] == 'complete') {
+				//Make status completed + is_paid = yes + updated_at + order_completed_at
+				$payment_details = json_decode($order['payment_details']);
+				$payment_details->paid = true;
+				$payment_details = json_encode($payment_details);
+				$next_invoice = get_setting('next_invoice');
+				$status = 'completed';
+				$site_id = $order['owner_site_id'];
+				$site_url = $order['owner_site_url'];
+				$site_name = $order['owner_site_name'];
+				$internal_order_id = get_setting('next_internal_order_id');
+
+				$sth = $db->prepare("UPDATE orders SET invoice_id = :invoice_id, payment_details = :payment_details, status = :status, order_completed_at = NOW(), order_updated_at = NOW(), updated_at = NOW(), proforma_text = '' WHERE id = :id LIMIT 1");
+				$sth->bindParam(':invoice_id', $next_invoice);
+				$sth->bindParam(':payment_details', $payment_details);
+				$sth->bindParam(':status', $status);
+				$sth->bindParam(':id', $id);
+				$res = $sth->execute();
+
+				if ($res) {
+					//make invoice
+					$sth = $db->prepare("INSERT INTO invoices SET invoice_id = :invoice_id, owner_site_id = :owner_site_id, owner_site_url = :owner_site_url, owner_site_name = :owner_site_name, order_id = :order_id, created_at = NOW()");
+					$sth->bindParam(':invoice_id', $next_invoice);
+					$sth->bindParam(':owner_site_id', $site_id);
+					$sth->bindParam(':owner_site_url', $site_url);
+					$sth->bindParam(':owner_site_name', $site_name);
+					$sth->bindParam(':order_id', $internal_order_id);
+
+					$res = $sth->execute();
+
+					update_setting('next_internal_order_id', $internal_order_id+1);
+					update_setting('next_invoice', $next_invoice+1);
+
+					if ($res) {
+						$_SESSION['invoices_count'] = $_SESSION['invoices_count'] + 1;
+
+						header('Location: '.BASE_URL.'/'.$global['current_url'].'?id='.$order['id'].'&action=view');
+						exit;
+					} else {
+						$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+					}
+				} else {
+					$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+				}
+			} else if ($_GET['status'] == 'delete') {
+				//Delete order
+
+				$sth = $db->prepare("DELETE FROM orders WHERE id = :id AND status = :status LIMIT 1");
+				$sth->bindParam(':id', $id);
+				$sth->bindParam(':status', $status);
+				$res = $sth->execute();
+
+				if (!$res) {
+					$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+				} else {
+					header('Location: '.BASE_URL.'/'.$global['current_url'].'?id='.$id.'&action=view');
+					exit;
+				}
+			} else {
+				$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+			}
+		}
+	} else {
+		$is_action = message('En fejl opstod, gå tilbage til Dashboard.', 'danger', false);
+	}
 } else {
-	$orders = get_order_for_table();
+	$orders = get_orders_for_table();
 }
 
 require '../templates/admin/header.php';
@@ -247,6 +389,7 @@ require '../templates/admin/header.php';
 												<select class="form-control" name="status" id="status">
 													<option selected value="completed">Færdig</option>
 													<option value="refunded">Refunderet</option>
+													<option value="proforma">Proforma</option>
 												</select>
 											</td>
 										</tr>
@@ -302,6 +445,21 @@ require '../templates/admin/header.php';
 											<td><textarea name="note" id="note" rows="8" class="form-control"></textarea></td><?php /*<input type="text" class="form-control" id="note" name="note">*/ ?>
 										</tr>
 										<tr><td></td><td></td></tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-sm-12" id="payment_text_row">
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tr>
+											<td>
+												<label for="proforma_text">Betalingsinfo</label>
+												<p class="text-muted">
+													Fx. Konto nr., reg. nr. og senest betalingsdato.
+												</p>
+											</td>
+											<td><textarea name="proforma_text" id="proforma_text" rows="8" class="form-control"></textarea></td>
+										</tr>
 									</table>
 								</div>
 							</div>
@@ -483,7 +641,7 @@ require '../templates/admin/header.php';
 						</div>
 					</form>
 				<?php elseif($action == 'view'): ?>
-					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Vis</h1>
+					<h1 class="page-header"><?php echo $titles['admin/index.php'].' / '.$global['site_title']; ?> / Vis<?php if ($order['status'] == 'proforma'): ?><span class="pull-right"><a href="<?php echo BASE_URL.'/admin/orders.php?id='.$order['id'].'&status=refund'; ?>" class="btn btn-default" id="refund-order">Refunderet</a><a href="<?php echo BASE_URL.'/admin/orders.php?id='.$order['id'].'&status=complete'; ?>" class="btn btn-success" id="complete-order">Betalt</a><a href="<?php echo BASE_URL.'/admin/orders.php?id='.$order['id'].'&status=delete'; ?>" class="btn btn-danger" id="delete-order">Slet</a></span><?php endif; ?></h1>
 					<div class="row">
 						<div class="col-sm-12"><h3>Ordredetaljer</h3></div>
 						<div class="col-sm-6">
@@ -499,7 +657,7 @@ require '../templates/admin/header.php';
 									</tr>
 									<tr>
 										<td>Ordre ID</td>
-										<td>#<?php echo $order['order_id']; ?> (<a href="<?php echo ($order['owner_site_id'] != 0) ? $order['owner_site_url'].'/wp-admin/post.php?post='.$order['order_id'].'&action=edit' : BASE_URL.'/admin/orders.php?invoice_id='.$order['invoice_id'].'&action=view' ; ?>" title="Vis ordre på <?php echo $order['owner_site_name']; ?>" target="_blank">Vis ordre</a>)</td>
+										<td>#<?php echo $order['order_id']; ?> (<a href="<?php echo ($order['owner_site_id'] != 0) ? $order['owner_site_url'].'/wp-admin/post.php?post='.$order['order_id'].'&action=edit' : BASE_URL.'/admin/orders.php?id='.$order['id'].'&action=view' ; ?>" title="Vis ordre på <?php echo $order['owner_site_name']; ?>" target="_blank">Vis ordre</a>)</td>
 									</tr>
 									<tr>
 										<td>Valuta</td>
@@ -558,12 +716,24 @@ require '../templates/admin/header.php';
 									</tr>
 									<tr>
 										<td>Eksportér</td>
-										<td><a href="?invoice_id=<?php echo $order['invoice_id']; ?>&action=export_pdf" title="Eksportér som .pdf fil">PDF</a>, <a href="?invoice_id=<?php echo $order['invoice_id']; ?>&action=export_csv" title="Eksportér som .csv fil">CSV</a></td>
+										<td><a href="?id=<?php echo $order['id']; ?>&action=export_pdf" title="Eksportér som .pdf fil">PDF</a>, <a href="?id=<?php echo $order['id']; ?>&action=export_csv" title="Eksportér som .csv fil">CSV</a></td>
 									</tr>
 									<tr><td></td><td></td></tr>
 								</table>
 							</div>
 						</div>
+						<?php if($order['status'] == 'proforma'): ?>
+						<div class="col-sm-12">
+							<div class="table-responsive">
+								<table class="table table-condensed">
+									<tr>
+										<td>Betalingsinfo:</td>
+										<td><?php echo (empty($order['proforma_text'])) ? '(Ingen)' : nl2br($order['proforma_text']); ?></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+						<?php endif; ?>
 						<div class="col-sm-12"><h3>Ordrelinjer</h3></div>
 						<div class="col-sm-12">
 							<div class="table-responsive">
@@ -773,13 +943,13 @@ require '../templates/admin/header.php';
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ($orders as $order) : ?>
+								<?php krsort($orders); foreach ($orders as $order) : ?>
 									<tr class="order_line">
 										<td><?php echo $order['invoice_id']; ?></td>
 										<td><?php echo $order['order_id']; ?></td>
 										<td><a href="<?php echo $order['owner_site_url']; ?>" target="_blank"><?php echo $order['owner_site_name']; ?></a></td>
 										<td class="name"><?php echo $order['billing_address']['first_name'].' '.$order['billing_address']['last_name']; ?></td>
-										<td><a href="orders.php?invoice_id=<?php echo $order['invoice_id']; ?>&action=view" class="btn btn-default">Vis</a></td>
+										<td><a href="orders.php?id=<?php echo $order['id']; ?>&action=view" class="btn btn-default">Vis</a></td>
 									</tr>	
 								<?php endforeach; ?>
 							</tbody>

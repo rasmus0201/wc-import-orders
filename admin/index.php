@@ -13,7 +13,7 @@ if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
 			$message = message('E-mail eller password er forkert!', 'danger', true);
 		}
 
-		header('Location: '.BASE_URL.'/admin/');
+		header('Location: '.ADMIN_URL);
 		exit;
 	}
 

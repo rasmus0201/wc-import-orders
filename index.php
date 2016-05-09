@@ -6,7 +6,7 @@ require 'app/init.php';
 require 'templates/head.php';
 
 ?>
-<div class="container" style="margin-bottom: 60px;">
+<div class="container" style="margin-bottom: 60px; margin-top: 10px">
 <?php echo $message; ?>
 <div class="jumbotron">
 	<h1>Ulvemosens Handelsselskab ApS</h1>

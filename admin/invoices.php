@@ -5,7 +5,7 @@ require '../app/init.php';
 
 
 if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-	header('Location: '.BASE_URL);
+	header('Location: '.ADMIN_URL);
 	exit;
 }
 if ((isset($_POST['export_csv']) || isset($_POST['export_pdf']) || isset($_POST['export_csv_bulk']) || isset($_POST['export_pdf_bulk'])) && check_user_abilities_min_accountant() ) {
@@ -63,9 +63,9 @@ require '../templates/admin/header.php';
 							<tr>
 								<?php if(check_user_abilities_min_accountant()): ?><th><div class="checkbox"><label><input type="checkbox" id="select_all"></label></div></th><?php endif; ?>
 								<th>Faktura nr.</th>
-								<th>Importeret</th>
+								<th>Importeret / Oprettet</th>
 								<th>Website</th>
-								<th></th>
+								<?php /*<th></th>*/ ?>
 							</tr>
 						</thead>
 						<tbody>
@@ -79,7 +79,7 @@ require '../templates/admin/header.php';
 									<td><?php echo $invoice['invoice_id']; ?></td>
 									<td><?php echo $invoice['created_at']; ?></td>
 									<td><a href="<?php echo $invoice['owner_site_url']; ?>" target="_blank"><?php echo $invoice['owner_site_name']; ?></a></td>
-									<td><a href="orders.php?invoice_id=<?php echo $invoice['invoice_id']; ?>&action=view" class="btn btn-default">Vis</a></td>
+									<?php /*<td><a href="orders.php?id=<?php echo $invoice['id']; ?>&action=view" class="btn btn-default">Vis</a></td> */ ?>
 								</tr>	
 							<?php endforeach; ?>
 						</tbody>

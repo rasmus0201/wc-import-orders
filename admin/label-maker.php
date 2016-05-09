@@ -3,30 +3,32 @@ require '../app/db.php';
 require '../app/init.php';
 
 if (!isset($_SESSION['loggedin']) || !$_SESSION['loggedin']) {
-	header('Location: '.BASE_URL);
+	header('Location: '.ADMIN_URL);
 	exit;
 }
 
 if (isset($_POST['make_label'])) {
 	require BASE_PATH.'/lib/tcpdf.php';
 
-	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'ISO-8859-1', false);
 
 	$pdf->SetCreator(PDF_CREATOR);
 	$pdf->SetAuthor('Ulvemosens Handelsselskab ApS');
-	$pdf->SetTitle('Fakturaer - Ulvemosens Handelsselskab ApS');
-	$pdf->SetSubject('Fakturaer - Ulvemosens Handelsselskab ApS');
-	$pdf->SetKeywords('Fakturaer, Ulvemosens Handelsselskab ApS');
+	$pdf->SetTitle('Labels - Ulvemosens Handelsselskab ApS');
+	$pdf->SetSubject('Labels - Ulvemosens Handelsselskab ApS');
+	$pdf->SetKeywords('Labels, Ulvemosens Handelsselskab ApS');
 	$pdf->SetPrintHeader(false);
 	$pdf->SetPrintFooter(false);
-	$pdf->SetMargins(0, 0, 0, 0);
+	$pdf->SetMargins(0, 0, 0, false);
 	$pdf->SetAutoPageBreak(false, 0);
 	$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 	$pdf->setFontSubsetting(true);
-	$pdf->SetFont('helvetica', '', 7, '', true);
+	$pdf->SetFont('dejavusans', '', 4.5, '', true);
 	$pdf->setCellPaddings(1, 3, 1, 1);
-	$pdf->setCellMargins(1, 3, 1, 1);
+	$pdf->setCellMargins(3, 3, 3, 3);
 	$pdf->SetFillColor(255, 255, 255);
+	$pdf->setFontSpacing(0.02);
+	$pdf->setCellHeightRatio(1.125);
 	$pdf->AddPage();
 
 	$y = $pdf->getY();
@@ -35,130 +37,130 @@ if (isset($_POST['make_label'])) {
 
 	if ($_POST['format'] == '3by8') {
 		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 750) {
-			$pdf->SetFont('helvetica', '', 5, '', true);
-			$pdf->setCellPaddings(1, 10, 1, 1);
+			$pdf->SetFont('dejavusans', '', 3.5, '', true);
+			$pdf->setCellPaddings(1, 10, 3, 1);
 		}
 
 		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 1300) {
-			$pdf->SetFont('helvetica', '', 3.5, '', true);
-			$pdf->setCellPaddings(1, 15, 1, 1);
+			$pdf->SetFont('dejavusans', '', 2.5, '', true);
+			$pdf->setCellPaddings(1, 15, 3, 1);
 		}
 		#New row
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 	
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+69.25, $y+37, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 50, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+68.25, $y+37, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(67, 50, $cell, 0, 'J', 1, 0, $x+(68.25*2), $y+37, true, 0, true, true, 50, 'B', true);
 
 	} else if ($_POST['format'] == '3by7') {
-		$pdf->setCellPaddings(2, 4, 2, 4);
-		$pdf->setCellMargins(1, 4, 1, 1);
+		$pdf->setCellPaddings(2.2, 4.75, 2.2, 1);
+		$pdf->setCellMargins(5, 15, 8, 5);
 
 		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 750) {
-			$pdf->SetFont('helvetica', '', 5, '', true);
-			$pdf->setCellPaddings(2, 8, 2, 2);
+			$pdf->SetFont('dejavusans', '', 3.5, '', true);
+			$pdf->setCellPaddings(2.2, 4.75, 2.2, 1);
 		}
 
 		if (strlen($_POST['name'].'Ingredienser: '.$_POST['ingredients']) > 1300) {
-			$pdf->SetFont('helvetica', '', 3.5, '', true);
-			$pdf->setCellPaddings(2, 12, 2, 2);
+			$pdf->SetFont('dejavusans', '', 2.5, '', true);
+			$pdf->setCellPaddings(2.2, 4.75, 2.2, 1);
 		}
 
 		#New row
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+0, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+0, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+0, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+0, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+0, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+0, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+42, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+42, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+42, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+42, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+42, true, 0, true, true, 50, 'B', true);
 
 		#New row
 		$y = $pdf->getY();
 
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+69.25, $y+42, true, 0, true, true, 50, 'B', true);
-		$pdf->MultiCell(69.5, 40, $cell, 0, 'J', 1, 0, $x+(69.25*2), $y+42, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x, $y+38, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+65.75, $y+38, true, 0, true, true, 50, 'B', true);
+		$pdf->MultiCell(66, 40, $cell, 0, 'J', 1, 0, $x+(65.75*2), $y+38, true, 0, true, true, 50, 'B', true);
 	}
 
 	$pdf->lastPage();
